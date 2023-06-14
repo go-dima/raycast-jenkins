@@ -10,6 +10,12 @@ export interface Preferences {
   jenkinsToken: string;
 }
 
+type extraInfo = {
+  result: string;
+  building?: boolean;
+  displayName: string;
+};
+
 interface JobResult {
   name: string;
   url: string;
@@ -49,6 +55,8 @@ type jobsListProps = {
 const JobsList = ({ job: parentJob }: jobsListProps) => {
   const [jobs, setJobs] = useState<JobResult[]>([]);
   const [viewName, setViewName] = useState<string>("");
+  const [extraInfo, setExtraInfo] = useState<Record<string, extraInfo>>({});
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     async function getJobs() {
@@ -64,9 +72,11 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
         const color = response.data.color;
         buildsAsJobs = builds.map((build) => {
           return {
+            displayName: build.number,
             name: build.number,
             url: build.url,
             color: color,
+            extra: undefined,
           };
         });
       }
@@ -76,21 +86,63 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
     getJobs();
   }, []);
 
+  useEffect(() => {
+    async function getExtraInfo() {
+      setIsLoading(true);
+      const jobsWithExtraInfo = await Promise.all(
+        jobs.map(async (job) => {
+          if (job.url) {
+            const response = await axios.request({
+              ...authConfig,
+              url: `${job.url}api/json`,
+            });
+            return (
+              response &&
+              response.data && {
+                name: job.name,
+                extra: response.data,
+              }
+            );
+          } else {
+            return job;
+          }
+        })
+      );
+      const map = {} as Record<string, extraInfo>;
+      for (const ele of jobsWithExtraInfo) {
+        map[ele.name] = ele.extra;
+      }
+      setExtraInfo(map);
+      setIsLoading(false);
+    }
+    getExtraInfo();
+  }, [jobs]);
+
   return (
     // Dima: This can be a component (used in main view and in search)
     <List
+      isLoading={isLoading}
       children={
         <List.Section title="Total" subtitle={`${jobs.length}`}>
           {jobs.map(function (job: JobResult) {
             return (
               <List.Item
-                title={viewName ? `${viewName} → ${job.name}` : job.name}
-                subtitle={job.color && `Last build color: ${job.color}`}
+                title={viewName ? `${viewName} → ${extraInfo[job.name]?.displayName ?? job.name}` : job.name}
+                subtitle={
+                  extraInfo[job.name] &&
+                  `${extraInfo[job.name].building ? "Building" : `${extraInfo[job.name].result ?? ""}`}`
+                }
                 key={job.name}
                 actions={
                   <ActionPanel>
                     <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} />
+                    <Action.CopyToClipboard title={"Copy Job Name"} content={extraInfo[job.name]?.displayName} />
                     <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
+                    <Action.OpenInBrowser
+                      shortcut={{ modifiers: ["cmd"], key: "j" }}
+                      title={"Open Json For Debug"}
+                      url={`${job.url}api/json`}
+                    />
                   </ActionPanel>
                 }
               />
