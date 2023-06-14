@@ -3,7 +3,7 @@ import axios, { AxiosResponse } from "axios";
 import https from "https";
 import { encode } from "js-base64";
 
-export interface Preferences {
+interface Preferences {
   jenkinsUrl: string;
   jenkinsUser: string;
   jenkinsToken: string;

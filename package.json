@@ -34,7 +34,7 @@
       "name": "jenkinsUser",
       "description": "Your Jenkins User",
       "placeholder": "Enter your Jenkins user",
-      "required": false,
+      "required": true,
       "title": "Jenkins User"
     },
     {
@@ -42,7 +42,7 @@
       "name": "jenkinsToken",
       "description": "Your Jenkins Token",
       "placeholder": "Enter your Jenkins token",
-      "required": false,
+      "required": true,
       "title": "Jenkins Token"
     }
   ],
