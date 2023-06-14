@@ -14,6 +14,8 @@ type extraInfo = {
   result: string;
   building?: boolean;
   displayName: string;
+  jobs?: JobResult[];
+  builds?: BuildResult[];
 };
 
 interface JobResult {
@@ -48,6 +50,23 @@ function toastFailure(msg: unknown) {
   showToast({ style: Toast.Style.Failure, title: "Search Failed", message: `${msg}` });
 }
 
+function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<string, extraInfo>) {
+  return jobs.filter((item) => {
+    const condition =
+      filterText.length === 0 ||
+      includesFilterText(item.name) ||
+      includesFilterText(extraInfo[item.name]?.displayName) ||
+      extraInfo[item.name]?.jobs?.some((job) => includesFilterText(job.name)) ||
+      extraInfo[item.name]?.builds?.some((build) => includesFilterText(build.url));
+    console.info(`Filtering ${item.name} with ${filterText} = ${condition}`);
+    return condition;
+
+    function includesFilterText(term: string): boolean {
+      return term.toLowerCase().includes(filterText.toLowerCase());
+    }
+  });
+}
+
 type jobsListProps = {
   job: JobResult;
 };
@@ -57,19 +76,19 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
   const [viewName, setViewName] = useState<string>("");
   const [extraInfo, setExtraInfo] = useState<Record<string, extraInfo>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [filterText, setFilterText] = useState<string>("");
 
   useEffect(() => {
     async function getJobs() {
-      const response = await axios.request({
+      const {
+        data: { fullName, jobs, builds, color },
+      }: { data: { fullName: string; jobs: JobResult[]; builds: BuildResult[]; color: string } } = await axios.request({
         ...authConfig,
         url: `${parentJob.url}api/json`,
       });
 
-      const { fullName, jobs, builds }: { fullName: string; jobs: JobResult[]; builds: BuildResult[] } = response.data;
-
       let buildsAsJobs: JobResult[] = [];
       if (builds) {
-        const color = response.data.color;
         buildsAsJobs = builds.map((build) => {
           return {
             displayName: build.number,
@@ -118,13 +137,17 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
     getExtraInfo();
   }, [jobs]);
 
+  const filteredJobs = filterJobs(jobs, filterText, extraInfo);
+
   return (
     // Dima: This can be a component (used in main view and in search)
     <List
       isLoading={isLoading}
+      filtering={filterText.length > 0}
+      onSearchTextChange={setFilterText}
       children={
-        <List.Section title="Total" subtitle={`${jobs.length}`}>
-          {jobs.map(function (job: JobResult) {
+        <List.Section title="Total" subtitle={`${filteredJobs.length}`}>
+          {filteredJobs.map(function (job: JobResult) {
             return (
               <List.Item
                 title={viewName ? `${viewName} → ${extraInfo[job.name]?.displayName ?? job.name}` : job.name}
