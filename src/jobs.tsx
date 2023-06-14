@@ -1,5 +1,5 @@
 import { HttpStatusCode } from "axios";
-import { Action, ActionPanel, List, showToast, Toast } from "@raycast/api";
+import { Action, ActionPanel, Color, List, showToast, Toast } from "@raycast/api";
 import { useCallback, useEffect, useState } from "react";
 import { BuildResult, ExtraInfo, JobResult } from "./types";
 import { fetchData, fetchRootData } from "./http";
@@ -40,20 +40,24 @@ function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<str
   });
 }
 
-function formatSubtitle(extraInfo: ExtraInfo): string | undefined {
-  if (!extraInfo) {
-    return "";
-  }
+type ItemAccessory = {
+  text: {
+    value: string;
+    color: Color;
+  };
+};
 
-  if (extraInfo.building) {
-    return "Building";
-  }
-
-  if (extraInfo.result) {
-    return extraInfo.result;
-  }
-
-  return extraInfo.filterMatches?.join(", ");
+function formatAccessory(color: string): ItemAccessory[] {
+  const textToColor: Record<string, ItemAccessory> = {
+    building: { text: { value: "building", color: Color.Orange } },
+    blue_anime: { text: { value: "building", color: Color.Orange } },
+    blue: { text: { value: "success", color: Color.Green } },
+    success: { text: { value: "success", color: Color.Green } },
+    red: { text: { value: "failure", color: Color.Red } },
+    aborted: { text: { value: "aborted", color: Color.SecondaryText } },
+  };
+  const accessory = textToColor[color?.toLowerCase()];
+  return accessory ? [accessory] : [];
 }
 
 type jobsListProps = {
@@ -133,11 +137,14 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
             return (
               <List.Item
                 title={viewName ? `${viewName} → ${extraInfo[job.name]?.displayName ?? job.name}` : job.name}
-                subtitle={formatSubtitle(extraInfo[job.name])}
+                subtitle={extraInfo[job.name]?.filterMatches?.join(", ")}
+                accessories={formatAccessory(
+                  extraInfo[job.name]?.building ? "building" : extraInfo[job.name]?.result ?? job.color
+                )}
                 key={job.name}
                 actions={
                   <ActionPanel>
-                    <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} />
+                    {job.url && <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} />}
                     <Action.CopyToClipboard title={"Copy Job Name"} content={extraInfo[job.name]?.displayName} />
                     <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
                     <Action.OpenInBrowser
