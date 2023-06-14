@@ -201,7 +201,7 @@ export default function Command() {
   }, []);
 
   return (
-    <List isLoading={isLoading} onSearchTextChange={onSearch} searchBarPlaceholder={"Search jenkins..."} throttle>
+    <List isLoading={isLoading} throttle>
       <List.Section title="Total" subtitle={`${searchResult.length}`}>
         {searchResult.map(function (job: JobResult) {
           return (
