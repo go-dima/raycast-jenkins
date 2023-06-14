@@ -15,4 +15,5 @@ export interface ExtraInfo {
   displayName: string;
   jobs?: JobResult[];
   builds?: BuildResult[];
+  filterMatches?: string[];
 }

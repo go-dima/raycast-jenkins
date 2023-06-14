@@ -9,20 +9,53 @@ function toastFailure(msg: unknown) {
 }
 
 function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<string, ExtraInfo>) {
+  if (!filterText) {
+    return jobs;
+  }
+
   return jobs.filter((item) => {
-    const condition =
-      filterText.length === 0 ||
+    const findJobs = extraInfo[item.name]?.jobs?.filter((job) => includesFilterText(job.name)).map((job) => job.name);
+    const findBuilds = extraInfo[item.name]?.builds
+      ?.filter((build) => includesFilterText(build.url))
+      .map((build) => `#${build.number}`);
+
+    const hasMatch =
       includesFilterText(item.name) ||
       includesFilterText(extraInfo[item.name]?.displayName) ||
-      extraInfo[item.name]?.jobs?.some((job) => includesFilterText(job.name)) ||
-      extraInfo[item.name]?.builds?.some((build) => includesFilterText(build.url));
-    console.info(`Filtering ${item.name} with ${filterText} = ${condition}`);
-    return condition;
+      findJobs?.length ||
+      findBuilds?.length;
+
+    if (filterText && extraInfo[item.name] && hasMatch) {
+      console.info(`Filtering ${item.name} with ${filterText}: ${findJobs?.join()} # ${findBuilds?.join()}`);
+      extraInfo[item.name].filterMatches = [...(findJobs ?? []), ...(findBuilds ?? [])];
+    }
+
+    return hasMatch;
 
     function includesFilterText(term: string): boolean {
+      if (!term) {
+        return false;
+      }
+
       return term.toLowerCase().includes(filterText.toLowerCase());
     }
   });
+}
+
+function formatSubtitle(extraInfo: ExtraInfo): string | undefined {
+  if (!extraInfo) {
+    return "";
+  }
+
+  if (extraInfo.building) {
+    return "Building";
+  }
+
+  if (extraInfo.result) {
+    return extraInfo.result;
+  }
+
+  return extraInfo.filterMatches?.join(", ");
 }
 
 type jobsListProps = {
@@ -92,7 +125,6 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
   }, [jobs]);
 
   const filteredJobs = filterJobs(jobs, filterText, extraInfo);
-
   return (
     // Dima: This can be a component (used in main view and in search)
     <List
@@ -105,10 +137,7 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
             return (
               <List.Item
                 title={viewName ? `${viewName} → ${extraInfo[job.name]?.displayName ?? job.name}` : job.name}
-                subtitle={
-                  extraInfo[job.name] &&
-                  `${extraInfo[job.name].building ? "Building" : `${extraInfo[job.name].result ?? ""}`}`
-                }
+                subtitle={formatSubtitle(extraInfo[job.name])}
                 key={job.name}
                 actions={
                   <ActionPanel>
