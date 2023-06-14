@@ -1,36 +1,14 @@
 import axios, { HttpStatusCode } from "axios";
-import https from "https";
 import { Action, ActionPanel, getPreferenceValues, List, showToast, Toast } from "@raycast/api";
-import { encode } from "js-base64";
 import { useCallback, useState } from "react";
+import { authConfig } from "./http";
 
-export interface Preferences {
-  jenkinsUrl: string;
-  jenkinsUser: string;
-  jenkinsToken: string;
-}
+const { jenkinsUrl }: Preferences = getPreferenceValues();
 
 interface SearchResult {
   name: string;
   url: string;
 }
-
-const { jenkinsUrl, jenkinsUser, jenkinsToken }: Preferences = getPreferenceValues();
-const authToken64 = encode(`${jenkinsUser}:${jenkinsToken}`);
-
-const authConfig = {
-  method: "get",
-  headers: {
-    Authorization: `Basic ${authToken64}`,
-    "Content-Type": "application/x-www-form-urlencoded",
-  },
-};
-
-const httpsAgent = new https.Agent({
-  rejectUnauthorized: false,
-});
-
-axios.defaults.httpsAgent = httpsAgent;
 
 function setUrl(s: SearchResult): SearchResult {
   s.url = `${jenkinsUrl}/search/?q=${encodeURIComponent(s.name)}`;

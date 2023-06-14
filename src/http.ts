@@ -11,7 +11,7 @@ interface Preferences {
 
 const { jenkinsUrl, jenkinsUser, jenkinsToken }: Preferences = getPreferenceValues();
 const authToken64 = encode(`${jenkinsUser}:${jenkinsToken}`);
-const authConfig = {
+export const authConfig = {
   method: "get",
   headers: {
     Authorization: `Basic ${authToken64}`,
