@@ -48,14 +48,23 @@ type ItemAccessory = {
 };
 
 function formatAccessory(color: string): ItemAccessory[] {
+  // colors
+  const buildingOrange = { text: { value: "building", color: Color.Orange } };
+  const successGreen = { text: { value: "success", color: Color.Green } };
+  const failureRed = { text: { value: "failure", color: Color.Red } };
+  const abortedGray = { text: { value: "aborted", color: Color.SecondaryText } };
+
+  // status to color
   const textToColor: Record<string, ItemAccessory> = {
-    building: { text: { value: "building", color: Color.Orange } },
-    blue_anime: { text: { value: "building", color: Color.Orange } },
-    blue: { text: { value: "success", color: Color.Green } },
-    success: { text: { value: "success", color: Color.Green } },
-    red: { text: { value: "failure", color: Color.Red } },
-    aborted: { text: { value: "aborted", color: Color.SecondaryText } },
+    building: buildingOrange,
+    blue_anime: buildingOrange,
+    blue: successGreen,
+    success: successGreen,
+    red: failureRed,
+    failure: failureRed,
+    aborted: abortedGray,
   };
+
   const accessory = textToColor[color?.toLowerCase()];
   return accessory ? [accessory] : [];
 }
@@ -134,6 +143,7 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
       children={
         <List.Section title="Total" subtitle={`${filteredJobs.length}`}>
           {filteredJobs.map(function (job: JobResult) {
+            const hasJobs = extraInfo[job.name]?.jobs || extraInfo[job.name]?.builds;
             return (
               <List.Item
                 title={viewName ? `${viewName} → ${extraInfo[job.name]?.displayName ?? job.name}` : job.name}
@@ -144,7 +154,7 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
                 key={job.name}
                 actions={
                   <ActionPanel>
-                    {job.url && <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} />}
+                    {hasJobs && <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} />}
                     <Action.CopyToClipboard title={"Copy Job Name"} content={extraInfo[job.name]?.displayName} />
                     <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
                     <Action.OpenInBrowser
