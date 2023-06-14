@@ -12,7 +12,7 @@ export interface Preferences {
 
 interface SearchResult {
   name: string;
-  link: string;
+  url: string;
 }
 
 const { jenkinsUrl, jenkinsUser, jenkinsToken }: Preferences = getPreferenceValues();
@@ -20,7 +20,6 @@ const authToken64 = encode(`${jenkinsUser}:${jenkinsToken}`);
 
 const authConfig = {
   method: "get",
-  url: `${jenkinsUrl}/search/suggest`,
   headers: {
     Authorization: `Basic ${authToken64}`,
     "Content-Type": "application/x-www-form-urlencoded",
@@ -33,8 +32,8 @@ const httpsAgent = new https.Agent({
 
 axios.defaults.httpsAgent = httpsAgent;
 
-function setLink(s: SearchResult): SearchResult {
-  s.link = `${jenkinsUrl}/search/?q=${encodeURIComponent(s.name)}`;
+function setUrl(s: SearchResult): SearchResult {
+  s.url = `${jenkinsUrl}/search/?q=${encodeURIComponent(s.name)}`;
   return s;
 }
 
@@ -58,6 +57,7 @@ export default function Command() {
       try {
         const response = await axios.request({
           ...authConfig,
+          url: `${jenkinsUrl}/search/suggest`,
           params: { query: text },
         });
 
@@ -66,7 +66,7 @@ export default function Command() {
         }
 
         const { suggestions } = response.data;
-        const searchData: SearchResult[] = suggestions ? suggestions.map(setLink) : [];
+        const searchData: SearchResult[] = suggestions ? suggestions.map(setUrl) : [];
         setSearchResult(searchData);
       } catch (err) {
         showToast({ style: Toast.Style.Failure, title: "Search Failed", message: `${err}` });
@@ -80,14 +80,14 @@ export default function Command() {
   return (
     <List isLoading={isLoading} onSearchTextChange={onSearch} searchBarPlaceholder={"Search jenkins..."} throttle>
       <List.Section title="Total" subtitle={`${searchResult.length}`}>
-        {searchResult.map(function (suggestion: SearchResult) {
+        {searchResult.map(function (result: SearchResult) {
           return (
             <List.Item
-              title={suggestion.name}
-              key={suggestion.name}
+              title={result.name}
+              key={result.name}
               actions={
                 <ActionPanel>
-                  <Action.OpenInBrowser title={"Open In Browser"} url={`${suggestion.link}`} />
+                  <Action.OpenInBrowser title={"Open In Browser"} url={`${result.url}`} />
                 </ActionPanel>
               }
             />
