@@ -12,6 +12,12 @@
       "title": "Search Jenkins",
       "description": "Disaply jenkins serach results",
       "mode": "view"
+    },
+    {
+      "name": "jobs",
+      "title": "View Jobs",
+      "description": "Disaply jenkins jobs",
+      "mode": "view"
     }
   ],
   "preferences": [
