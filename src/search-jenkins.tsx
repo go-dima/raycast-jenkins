@@ -33,6 +33,11 @@ const httpsAgent = new https.Agent({
 
 axios.defaults.httpsAgent = httpsAgent;
 
+function setLink(s: SearchResult): SearchResult {
+  s.link = `${jenkinsUrl}/search/?q=${encodeURIComponent(s.name)}`;
+  return s;
+}
+
 export default function Command() {
   const [searchText, setSearchText] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -49,25 +54,25 @@ export default function Command() {
       }
 
       setIsLoading(true);
-      const response = await axios.request({
-        ...authConfig,
-        params: { query: text },
-      });
 
-      if (response.status != HttpStatusCode.Ok) {
-        showToast({ style: Toast.Style.Failure, title: "Search Failed", message: `${response.statusText}` });
+      try {
+        const response = await axios.request({
+          ...authConfig,
+          params: { query: text },
+        });
+
+        if (response.status != HttpStatusCode.Ok) {
+          showToast({ style: Toast.Style.Failure, title: "Search Failed", message: `${response.statusText}` });
+        }
+
+        const { suggestions } = response.data;
+        const searchData: SearchResult[] = suggestions ? suggestions.map(setLink) : [];
+        setSearchResult(searchData);
+      } catch (err) {
+        showToast({ style: Toast.Style.Failure, title: "Search Failed", message: `${err}` });
+      } finally {
+        setIsLoading(isLoading);
       }
-
-      const { suggestions } = response.data;
-      const searchData: SearchResult[] = suggestions
-        ? suggestions.map((s: SearchResult) => {
-            s.link = `${jenkinsUrl}/search/?q=${encodeURIComponent(s.name)}`;
-            return s;
-          })
-        : [];
-
-      setSearchResult(searchData);
-      setIsLoading(isLoading);
     },
     [setSearchResult]
   );
