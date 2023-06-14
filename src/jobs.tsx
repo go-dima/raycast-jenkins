@@ -9,25 +9,23 @@ function toastFailure(msg: unknown) {
 }
 
 function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<string, ExtraInfo>) {
-  if (!filterText) {
-    return jobs;
-  }
-
   return jobs.filter((item) => {
-    const findJobs = extraInfo[item.name]?.jobs?.filter((job) => includesFilterText(job.name)).map((job) => job.name);
-    const findBuilds = extraInfo[item.name]?.builds
+    const matchingJobs = extraInfo[item.name]?.jobs
+      ?.filter((job) => includesFilterText(job.name))
+      .map((job) => job.name);
+    const matchingBuilds = extraInfo[item.name]?.builds
       ?.filter((build) => includesFilterText(build.url))
       .map((build) => `#${build.number}`);
 
     const hasMatch =
+      !filterText ||
       includesFilterText(item.name) ||
       includesFilterText(extraInfo[item.name]?.displayName) ||
-      findJobs?.length ||
-      findBuilds?.length;
+      matchingJobs?.length ||
+      matchingBuilds?.length;
 
-    if (filterText && extraInfo[item.name] && hasMatch) {
-      console.info(`Filtering ${item.name} with ${filterText}: ${findJobs?.join()} # ${findBuilds?.join()}`);
-      extraInfo[item.name].filterMatches = [...(findJobs ?? []), ...(findBuilds ?? [])];
+    if (extraInfo[item.name]) {
+      extraInfo[item.name].filterMatches = filterText ? [...(matchingJobs ?? []), ...(matchingBuilds ?? [])] : [];
     }
 
     return hasMatch;
@@ -126,10 +124,8 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
 
   const filteredJobs = filterJobs(jobs, filterText, extraInfo);
   return (
-    // Dima: This can be a component (used in main view and in search)
     <List
       isLoading={isLoading}
-      filtering={filterText.length > 0}
       onSearchTextChange={setFilterText}
       children={
         <List.Section title="Total" subtitle={`${filteredJobs.length}`}>
