@@ -1,0 +1,66 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "jenkins",
+  "title": "Jenkins",
+  "description": "Jenkins Runner Extension",
+  "icon": "jenkins-kodem.png",
+  "author": "go_dima",
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "search-jenkins",
+      "title": "Search Jenkins",
+      "description": "Disaply jenkins serach results",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "type": "textfield",
+      "name": "jenkinsUrl",
+      "description": "Your Jenkins Url",
+      "placeholder": "Enter your Jenkins url",
+      "required": true,
+      "title": "Jenkins Url"
+    },
+    {
+      "type": "textfield",
+      "name": "jenkinsUser",
+      "description": "Your Jenkins User",
+      "placeholder": "Enter your Jenkins user",
+      "required": false,
+      "title": "Jenkins User"
+    },
+    {
+      "type": "password",
+      "name": "jenkinsToken",
+      "description": "Your Jenkins Token",
+      "placeholder": "Enter your Jenkins token",
+      "required": false,
+      "title": "Jenkins Token"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.51.0",
+    "@raycast/utils": "^1.6.1",
+    "axios": "^1.4.0",
+    "html-parser": "^0.11.0",
+    "js-base64": "^3.7.5"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "1.0.5",
+    "@types/html-parser": "^0.11.2",
+    "@types/node": "18.8.3",
+    "@types/react": "18.0.9",
+    "eslint": "^7.32.0",
+    "prettier": "^2.5.1",
+    "typescript": "^4.4.3"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}
