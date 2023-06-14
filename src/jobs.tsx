@@ -1,56 +1,14 @@
-import axios, { HttpStatusCode } from "axios";
-import https from "https";
-import { Action, ActionPanel, getPreferenceValues, List, showToast, Toast } from "@raycast/api";
-import { encode } from "js-base64";
+import { HttpStatusCode } from "axios";
+import { Action, ActionPanel, List, showToast, Toast } from "@raycast/api";
 import { useCallback, useEffect, useState } from "react";
-
-export interface Preferences {
-  jenkinsUrl: string;
-  jenkinsUser: string;
-  jenkinsToken: string;
-}
-
-type extraInfo = {
-  result: string;
-  building?: boolean;
-  displayName: string;
-  jobs?: JobResult[];
-  builds?: BuildResult[];
-};
-
-interface JobResult {
-  name: string;
-  url: string;
-  color: string;
-}
-
-interface BuildResult {
-  number: string;
-  url: string;
-}
-
-const { jenkinsUrl, jenkinsUser, jenkinsToken }: Preferences = getPreferenceValues();
-const authToken64 = encode(`${jenkinsUser}:${jenkinsToken}`);
-
-const authConfig = {
-  method: "get",
-  headers: {
-    Authorization: `Basic ${authToken64}`,
-    "Content-Type": "application/x-www-form-urlencoded",
-  },
-};
-
-const httpsAgent = new https.Agent({
-  rejectUnauthorized: false,
-});
-
-axios.defaults.httpsAgent = httpsAgent;
+import { BuildResult, ExtraInfo, JobResult } from "./types";
+import { fetchData, fetchRootData } from "./http";
 
 function toastFailure(msg: unknown) {
   showToast({ style: Toast.Style.Failure, title: "Search Failed", message: `${msg}` });
 }
 
-function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<string, extraInfo>) {
+function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<string, ExtraInfo>) {
   return jobs.filter((item) => {
     const condition =
       filterText.length === 0 ||
@@ -74,7 +32,7 @@ type jobsListProps = {
 const JobsList = ({ job: parentJob }: jobsListProps) => {
   const [jobs, setJobs] = useState<JobResult[]>([]);
   const [viewName, setViewName] = useState<string>("");
-  const [extraInfo, setExtraInfo] = useState<Record<string, extraInfo>>({});
+  const [extraInfo, setExtraInfo] = useState<Record<string, ExtraInfo>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [filterText, setFilterText] = useState<string>("");
 
@@ -82,10 +40,9 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
     async function getJobs() {
       const {
         data: { fullName, jobs, builds, color },
-      }: { data: { fullName: string; jobs: JobResult[]; builds: BuildResult[]; color: string } } = await axios.request({
-        ...authConfig,
-        url: `${parentJob.url}api/json`,
-      });
+      }: { data: { fullName: string; jobs: JobResult[]; builds: BuildResult[]; color: string } } = await fetchData(
+        `${parentJob.url}api/json`
+      );
 
       let buildsAsJobs: JobResult[] = [];
       if (builds) {
@@ -111,10 +68,7 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
       const jobsWithExtraInfo = await Promise.all(
         jobs.map(async (job) => {
           if (job.url) {
-            const response = await axios.request({
-              ...authConfig,
-              url: `${job.url}api/json`,
-            });
+            const response = await fetchData(`${job.url}api/json`);
             return (
               response &&
               response.data && {
@@ -127,7 +81,7 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
           }
         })
       );
-      const map = {} as Record<string, extraInfo>;
+      const map = {} as Record<string, ExtraInfo>;
       for (const ele of jobsWithExtraInfo) {
         map[ele.name] = ele.extra;
       }
@@ -192,16 +146,13 @@ export default function Command() {
       setIsLoading(true);
 
       try {
-        const response = await axios.request({
-          ...authConfig,
-          url: `${jenkinsUrl}/api/json`,
-        });
+        const { status, statusText, data } = await fetchRootData();
 
-        if (response.status != HttpStatusCode.Ok) {
-          toastFailure(response.statusText);
+        if (status != HttpStatusCode.Ok) {
+          toastFailure(statusText);
         }
 
-        const { fullName, jobs }: { fullName: string; jobs: JobResult[] } = response.data;
+        const { fullName, jobs }: { fullName: string; jobs: JobResult[] } = data;
         setSearchResult(jobs);
         setViewName(fullName);
       } catch (err) {
