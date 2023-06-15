@@ -1,8 +1,8 @@
 import { HttpStatusCode } from "axios";
 import { Action, ActionPanel, Color, List, showToast, Toast } from "@raycast/api";
 import { useCallback, useEffect, useState } from "react";
-import { BuildResult, ExtraInfo, JobResult } from "./types";
-import { fetchData, fetchRootData } from "./http";
+import { ExtraInfo, JobResult } from "./types";
+import { fetchJsonData, fetchRootData } from "./http";
 
 function toastFailure(msg: unknown) {
   showToast({ style: Toast.Style.Failure, title: "Search Failed", message: `${msg}` });
@@ -34,7 +34,7 @@ function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<str
       if (!term) {
         return false;
       }
-      return `${term}`.toLowerCase().includes(`${filterText}`.toLowerCase());
+      return term.toString().toLowerCase().includes(filterText.toString().toLowerCase());
     }
   });
 }
@@ -77,7 +77,7 @@ async function getExtraInfo(
   const jobsWithExtraInfo = (
     await Promise.all(
       jobs.map(async (job) => {
-        const { data }: { data: ExtraInfo } = await fetchData(`${job.url}api/json`);
+        const { data }: { data: ExtraInfo } = await fetchJsonData(job.url);
         if (data) {
           // if the item is job, we want to use the color from the parent
           data.color = data.color ?? job.color;
@@ -113,10 +113,10 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
     async function getJobs() {
       const {
         data: { fullName, jobs, builds },
-      }: { data: ExtraInfo } = await fetchData(`${parentJob.url}api/json`);
+      }: { data: ExtraInfo } = await fetchJsonData(parentJob.url);
 
       setViewName(fullName);
-      setJobs(jobs ?? builds?.map((build) => ({ name: build.number, url: build.url })));
+      setJobs(jobs ?? builds?.map((build) => ({ name: build.number.toString(), url: build.url })));
     }
     getJobs();
   }, []);
@@ -133,32 +133,38 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
       children={
         <List.Section title={viewName} subtitle={`${filteredJobs.length}`}>
           {filteredJobs.map(function (job: JobResult) {
-            const hasJobs = extraInfo[job.name]?.jobs || extraInfo[job.name]?.builds;
-            return (
-              <List.Item
-                title={viewName ? `${extraInfo[job.name]?.displayName ?? job.name}` : job.name}
-                subtitle={extraInfo[job.name]?.filterMatches?.join(", ")}
-                accessories={formatAccessory(
-                  extraInfo[job.name]?.color ??
-                    (extraInfo[job.name]?.building ? "building" : extraInfo[job.name]?.result)
-                )}
-                key={job.name}
-                actions={
-                  <ActionPanel>
-                    {hasJobs && <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} />}
-                    <Action.CopyToClipboard title={"Copy Job Name"} content={extraInfo[job.name]?.displayName} />
-                    <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
-                    <Action.OpenInBrowser
-                      shortcut={{ modifiers: ["cmd"], key: "j" }}
-                      title={"Open Json For Debug"}
-                      url={`${job.url}api/json`}
-                    />
-                  </ActionPanel>
-                }
-              />
-            );
+            return <JobListItem job={job} jobInfo={extraInfo[job.name]} key={job.name} />;
           })}
         </List.Section>
+      }
+    />
+  );
+};
+
+type jobItemProps = {
+  job: JobResult;
+  jobInfo: ExtraInfo;
+};
+
+const JobListItem = ({ job, jobInfo }: jobItemProps) => {
+  const hasJobs = jobInfo?.jobs || jobInfo?.builds;
+  return (
+    <List.Item
+      title={jobInfo?.displayName ?? job.name.toString()}
+      subtitle={jobInfo?.filterMatches?.join(", ")}
+      accessories={formatAccessory(jobInfo?.color ?? (jobInfo?.building ? "building" : jobInfo?.result))}
+      key={job.name}
+      actions={
+        <ActionPanel>
+          {hasJobs && <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} />}
+          <Action.CopyToClipboard title={"Copy Job Name"} content={jobInfo?.displayName} />
+          <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
+          <Action.OpenInBrowser
+            shortcut={{ modifiers: ["cmd"], key: "j" }}
+            title={"Open Json For Debug"}
+            url={`${job.url}api/json`}
+          />
+        </ActionPanel>
       }
     />
   );

@@ -32,13 +32,13 @@ export interface fetchResponse {
   data: ExtraInfo;
 }
 
-export async function fetchData(url: string): Promise<fetchResponse> {
+export async function fetchJsonData(url: string): Promise<fetchResponse> {
   return await axios.request({
     ...authConfig,
-    url: url,
+    url: `${url}api/json`,
   });
 }
 
 export async function fetchRootData(): Promise<fetchResponse> {
-  return await fetchData(`${jenkinsUrl}/api/json`);
+  return await fetchJsonData(jenkinsUrl);
 }
