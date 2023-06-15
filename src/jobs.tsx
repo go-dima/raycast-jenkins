@@ -34,8 +34,7 @@ function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<str
       if (!term) {
         return false;
       }
-
-      return term.toLowerCase().includes(filterText.toLowerCase());
+      return `${term}`.toLowerCase().includes(`${filterText}`.toLowerCase());
     }
   });
 }
@@ -67,6 +66,36 @@ function formatAccessory(color: string): ItemAccessory[] {
 
   const accessory = textToColor[color?.toLowerCase()];
   return accessory ? [accessory] : [];
+}
+
+async function getExtraInfo(
+  jobs: JobResult[],
+  loadingSetter: (arg0: boolean) => void,
+  infoSetter: (arg0: Record<string, ExtraInfo>) => void
+) {
+  loadingSetter(true);
+  const jobsWithExtraInfo = await Promise.all(
+    jobs.map(async (job) => {
+      if (job.url) {
+        const response = await fetchData(`${job.url}api/json`);
+        return (
+          response &&
+          response.data && {
+            name: job.name,
+            extra: response.data,
+          }
+        );
+      } else {
+        return job;
+      }
+    })
+  );
+  const map: Record<string, ExtraInfo> = jobsWithExtraInfo.reduce((acc, ele) => {
+    acc[ele.name] = ele.extra;
+    return acc;
+  }, {});
+  infoSetter(map);
+  loadingSetter(false);
 }
 
 type jobsListProps = {
@@ -107,32 +136,7 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
   }, []);
 
   useEffect(() => {
-    async function getExtraInfo() {
-      setIsLoading(true);
-      const jobsWithExtraInfo = await Promise.all(
-        jobs.map(async (job) => {
-          if (job.url) {
-            const response = await fetchData(`${job.url}api/json`);
-            return (
-              response &&
-              response.data && {
-                name: job.name,
-                extra: response.data,
-              }
-            );
-          } else {
-            return job;
-          }
-        })
-      );
-      const map = {} as Record<string, ExtraInfo>;
-      for (const ele of jobsWithExtraInfo) {
-        map[ele.name] = ele.extra;
-      }
-      setExtraInfo(map);
-      setIsLoading(false);
-    }
-    getExtraInfo();
+    getExtraInfo(jobs, setIsLoading, setExtraInfo);
   }, [jobs]);
 
   const filteredJobs = filterJobs(jobs, filterText, extraInfo);
@@ -141,12 +145,12 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
       isLoading={isLoading}
       onSearchTextChange={setFilterText}
       children={
-        <List.Section title="Total" subtitle={`${filteredJobs.length}`}>
+        <List.Section title={viewName} subtitle={`${filteredJobs.length}`}>
           {filteredJobs.map(function (job: JobResult) {
             const hasJobs = extraInfo[job.name]?.jobs || extraInfo[job.name]?.builds;
             return (
               <List.Item
-                title={viewName ? `${viewName} → ${extraInfo[job.name]?.displayName ?? job.name}` : job.name}
+                title={viewName ? `${extraInfo[job.name]?.displayName ?? job.name}` : job.name}
                 subtitle={extraInfo[job.name]?.filterMatches?.join(", ")}
                 accessories={formatAccessory(
                   extraInfo[job.name]?.building ? "building" : extraInfo[job.name]?.result ?? job.color
@@ -177,14 +181,10 @@ export default function Command() {
   const [searchText, setSearchText] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchResult, setSearchResult] = useState<JobResult[]>([]);
-  const [viewName, setViewName] = useState<string>("");
+  const [extraInfo, setExtraInfo] = useState<Record<string, ExtraInfo>>({});
 
   const onSearch = useCallback(
-    async function doSearch(text: string) {
-      if (searchText !== text) {
-        setSearchText(text);
-      }
-
+    async function doSearch() {
       setIsLoading(true);
 
       try {
@@ -194,9 +194,8 @@ export default function Command() {
           toastFailure(statusText);
         }
 
-        const { fullName, jobs }: { fullName: string; jobs: JobResult[] } = data;
+        const { jobs }: { fullName: string; jobs: JobResult[] } = data;
         setSearchResult(jobs);
-        setViewName(fullName);
       } catch (err) {
         toastFailure(err);
       } finally {
@@ -207,21 +206,27 @@ export default function Command() {
   );
 
   useEffect(() => {
-    onSearch("");
+    onSearch();
   }, []);
 
+  useEffect(() => {
+    getExtraInfo(searchResult, setIsLoading, setExtraInfo);
+  }, [searchResult]);
+
+  const filteredResults = filterJobs(searchResult, searchText, extraInfo);
   return (
-    <List isLoading={isLoading} throttle>
+    <List isLoading={isLoading} onSearchTextChange={setSearchText} throttle>
       <List.Section title="Total" subtitle={`${searchResult.length}`}>
-        {searchResult.map(function (job: JobResult) {
+        {filteredResults.map(function (job: JobResult) {
           return (
             <List.Item
-              title={viewName ? `${viewName} → ${job.name}` : job.name}
+              title={job.name}
               key={job.name}
+              subtitle={extraInfo[job.name]?.filterMatches?.join(", ")}
               actions={
                 <ActionPanel>
                   <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} />
-                  <Action.OpenInBrowser title={"Show Jobs"} url={job.url} />
+                  <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
                 </ActionPanel>
               }
             />
