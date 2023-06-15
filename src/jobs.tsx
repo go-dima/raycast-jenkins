@@ -94,7 +94,6 @@ async function getExtraInfo(
     acc[ele.name] = ele.extra;
     return acc;
   }, {});
-
   infoSetter(jobsWithExtraInfo);
   loadingSetter(false);
 }
@@ -102,14 +101,6 @@ async function getExtraInfo(
 type jobsListProps = {
   job: JobResult;
 };
-
-interface fetchResponseProps {
-  fullName: string;
-  jobs: JobResult[];
-  builds: BuildResult[];
-  color: string;
-  _class: string;
-}
 
 const JobsList = ({ job: parentJob }: jobsListProps) => {
   const [jobs, setJobs] = useState<JobResult[]>([]);
@@ -122,7 +113,7 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
     async function getJobs() {
       const {
         data: { fullName, jobs, builds },
-      }: { data: fetchResponseProps } = await fetchData(`${parentJob.url}api/json`);
+      }: { data: ExtraInfo } = await fetchData(`${parentJob.url}api/json`);
 
       setViewName(fullName);
       setJobs(jobs ?? builds?.map((build) => ({ name: build.number, url: build.url })));

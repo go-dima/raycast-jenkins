@@ -1,7 +1,8 @@
 import { getPreferenceValues } from "@raycast/api";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import https from "https";
 import { encode } from "js-base64";
+import { ExtraInfo } from "./types";
 
 interface Preferences {
   jenkinsUrl: string;
@@ -25,22 +26,19 @@ const httpsAgent = new https.Agent({
 
 axios.defaults.httpsAgent = httpsAgent;
 
-// {
-//   data: {
-//     fullName: string;
-//     jobs: JobResult[];
-//     builds: BuildResult[];
-//     color: string;
-//   };
-// }
-// TODO: handle typing here
-export async function fetchData(url: string): Promise<AxiosResponse<any, any>> {
+export interface fetchResponse {
+  status: number;
+  statusText: string;
+  data: ExtraInfo;
+}
+
+export async function fetchData(url: string): Promise<fetchResponse> {
   return await axios.request({
     ...authConfig,
     url: url,
   });
 }
 
-export async function fetchRootData(): Promise<AxiosResponse<any, any>> {
+export async function fetchRootData(): Promise<fetchResponse> {
   return await fetchData(`${jenkinsUrl}/api/json`);
 }

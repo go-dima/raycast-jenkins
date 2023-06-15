@@ -11,10 +11,11 @@ export interface BuildResult {
 
 export interface ExtraInfo {
   displayName: string;
+  fullName: string;
   color?: string;
   building?: boolean;
   result: string;
-  jobs?: JobResult[];
-  builds?: BuildResult[];
+  jobs: JobResult[];
+  builds: BuildResult[];
   filterMatches?: string[];
 }
