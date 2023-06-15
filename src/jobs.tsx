@@ -74,33 +74,42 @@ async function getExtraInfo(
   infoSetter: (arg0: Record<string, ExtraInfo>) => void
 ) {
   loadingSetter(true);
-  const jobsWithExtraInfo = await Promise.all(
-    jobs.map(async (job) => {
-      if (job.url) {
-        const response = await fetchData(`${job.url}api/json`);
+  const jobsWithExtraInfo = (
+    await Promise.all(
+      jobs.map(async (job) => {
+        const { data }: { data: ExtraInfo } = await fetchData(`${job.url}api/json`);
+        if (data) {
+          // if the item is job, we want to use the color from the parent
+          data.color = data.color ?? job.color;
+        }
         return (
-          response &&
-          response.data && {
+          data && {
             name: job.name,
-            extra: response.data,
+            extra: data as ExtraInfo,
           }
         );
-      } else {
-        return job;
-      }
-    })
-  );
-  const map: Record<string, ExtraInfo> = jobsWithExtraInfo.reduce((acc, ele) => {
+      })
+    )
+  ).reduce((acc: Record<string, ExtraInfo>, ele) => {
     acc[ele.name] = ele.extra;
     return acc;
   }, {});
-  infoSetter(map);
+
+  infoSetter(jobsWithExtraInfo);
   loadingSetter(false);
 }
 
 type jobsListProps = {
   job: JobResult;
 };
+
+interface fetchResponseProps {
+  fullName: string;
+  jobs: JobResult[];
+  builds: BuildResult[];
+  color: string;
+  _class: string;
+}
 
 const JobsList = ({ job: parentJob }: jobsListProps) => {
   const [jobs, setJobs] = useState<JobResult[]>([]);
@@ -112,25 +121,11 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
   useEffect(() => {
     async function getJobs() {
       const {
-        data: { fullName, jobs, builds, color },
-      }: { data: { fullName: string; jobs: JobResult[]; builds: BuildResult[]; color: string } } = await fetchData(
-        `${parentJob.url}api/json`
-      );
+        data: { fullName, jobs, builds },
+      }: { data: fetchResponseProps } = await fetchData(`${parentJob.url}api/json`);
 
-      let buildsAsJobs: JobResult[] = [];
-      if (builds) {
-        buildsAsJobs = builds.map((build) => {
-          return {
-            displayName: build.number,
-            name: build.number,
-            url: build.url,
-            color: color,
-            extra: undefined,
-          };
-        });
-      }
       setViewName(fullName);
-      setJobs(jobs ?? buildsAsJobs);
+      setJobs(jobs ?? builds?.map((build) => ({ name: build.number, url: build.url })));
     }
     getJobs();
   }, []);
@@ -153,7 +148,8 @@ const JobsList = ({ job: parentJob }: jobsListProps) => {
                 title={viewName ? `${extraInfo[job.name]?.displayName ?? job.name}` : job.name}
                 subtitle={extraInfo[job.name]?.filterMatches?.join(", ")}
                 accessories={formatAccessory(
-                  extraInfo[job.name]?.building ? "building" : extraInfo[job.name]?.result ?? job.color
+                  extraInfo[job.name]?.color ??
+                    (extraInfo[job.name]?.building ? "building" : extraInfo[job.name]?.result)
                 )}
                 key={job.name}
                 actions={

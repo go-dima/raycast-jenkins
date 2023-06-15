@@ -10,9 +10,10 @@ export interface BuildResult {
 }
 
 export interface ExtraInfo {
-  result: string;
-  building?: boolean;
   displayName: string;
+  color?: string;
+  building?: boolean;
+  result: string;
   jobs?: JobResult[];
   builds?: BuildResult[];
   filterMatches?: string[];
