@@ -65,6 +65,7 @@ export const JobsList = ({ job: parentJob }: jobsListProps): JSX.Element => {
     <List
       isLoading={isLoading}
       onSearchTextChange={setFilterText}
+      searchBarPlaceholder="Search for builds..."
       children={
         <List.Section title={viewName} subtitle={`${filteredJobs.length}`}>
           {filteredJobs.map(function (job: JobResult) {

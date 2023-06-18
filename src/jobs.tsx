@@ -48,7 +48,7 @@ export default function Command() {
 
   const filteredResults = filterJobs(searchResult, searchText, extraInfo);
   return (
-    <List isLoading={isLoading} onSearchTextChange={setSearchText} throttle>
+    <List isLoading={isLoading} onSearchTextChange={setSearchText} searchBarPlaceholder="Search for jobs..." throttle>
       <List.Section title="Total" subtitle={`${searchResult.length}`}>
         {filteredResults.map(function (job: JobResult) {
           return (
