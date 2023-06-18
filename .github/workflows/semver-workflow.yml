@@ -23,6 +23,7 @@ jobs:
       - name: Determine New Version
         id: version_bump
         run: |
+          git fetch --tags --all -q
           tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           message=$(git log --format=%B -n 1 2>/dev/null || echo "empty")
           
