@@ -1,0 +1,44 @@
+name: Version Bump
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Semver
+        run: npm install -g semver
+
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 5
+
+      - name: Determine New Version
+        id: version_bump
+        run: |
+          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          message=$(git log --format=%B -n 1 2>/dev/null || echo "empty")
+          
+          bump_step="patch"
+          if [[ $message == major:* ]]; then
+            bump_step="major"
+          elif [[ $message == minor:* ]]; then
+            bump_step="minor"
+          fi
+          
+          new_version=$(semver -i ${bump_step} ${tag})
+          echo "NEW_VERSION=${new_version}" >> $GITHUB_OUTPUT
+
+      - name: Create Tag
+        if: success()
+        run: |
+          new_version=${{ steps.version_bump.outputs.NEW_VERSION }}
+          git tag $new_version
+          git push origin $new_version
