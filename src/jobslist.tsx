@@ -93,8 +93,8 @@ export const JobListItem = ({ job, jobInfo }: jobItemProps): JSX.Element => {
       actions={
         <ActionPanel>
           {hasJobs && <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} />}
-          <Action.CopyToClipboard title={"Copy Job Name"} content={jobInfo?.displayName} />
           <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
+          <Action.CopyToClipboard title={"Copy Job Name"} content={jobInfo?.displayName} />
           <Action.OpenInBrowser
             shortcut={{ modifiers: ["cmd"], key: "j" }}
             title={"Open Json For Debug"}
