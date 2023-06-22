@@ -5,6 +5,7 @@ import { ExtraInfo, JobResult } from "./types";
 import { fetchRootData } from "./http";
 import { JobsList } from "./jobslist";
 import { filterJobs, getExtraInfo } from "./utils";
+import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 
 function toastFailure(msg: unknown) {
   showToast({ style: Toast.Style.Failure, title: "Search Failed", message: `${msg}` });
@@ -46,7 +47,9 @@ export default function Command() {
     getExtraInfo(searchResult, setIsLoading, setExtraInfo);
   }, [searchResult]);
 
-  const filteredResults = filterJobs(searchResult, searchText, extraInfo);
+  const { data: sortedResults, recordUsage } = useUsageBasedSort<JobResult>(searchResult || [], "folders");
+  const filteredResults = filterJobs(sortedResults, searchText, extraInfo);
+
   return (
     <List isLoading={isLoading} onSearchTextChange={setSearchText} searchBarPlaceholder="Search for jobs..." throttle>
       <List.Section title="Total" subtitle={`${searchResult.length}`}>
@@ -58,7 +61,11 @@ export default function Command() {
               subtitle={extraInfo[job.name]?.filterMatches?.join(", ")}
               actions={
                 <ActionPanel>
-                  <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} />
+                  <Action.Push
+                    title={"Show Jobs"}
+                    target={<JobsList job={job} sortByUsage={true} />}
+                    onPush={() => recordUsage(job.name)}
+                  />
                   <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
                 </ActionPanel>
               }

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ExtraInfo, JobResult } from "./types";
 import { fetchJsonData } from "./http";
 import { filterJobs, getExtraInfo } from "./utils";
+import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 
 type ItemAccessory = {
   text: {
@@ -35,9 +36,10 @@ function formatAccessory(color: string): ItemAccessory[] {
 
 type jobsListProps = {
   job: JobResult;
+  sortByUsage?: boolean;
 };
 
-export const JobsList = ({ job: parentJob }: jobsListProps): JSX.Element => {
+export const JobsList = ({ job: parentJob, sortByUsage }: jobsListProps): JSX.Element => {
   const [jobs, setJobs] = useState<JobResult[]>([]);
   const [viewName, setViewName] = useState<string>("");
   const [extraInfo, setExtraInfo] = useState<Record<string, ExtraInfo>>({});
@@ -60,7 +62,9 @@ export const JobsList = ({ job: parentJob }: jobsListProps): JSX.Element => {
     getExtraInfo(jobs, setIsLoading, setExtraInfo);
   }, [jobs]);
 
-  const filteredJobs = filterJobs(jobs, filterText, extraInfo);
+  const { data: sortedResults, recordUsage } = useUsageBasedSort<JobResult>(jobs || [], "jobs");
+  const filteredJobs = filterJobs(sortedResults, filterText, extraInfo);
+
   return (
     <List
       isLoading={isLoading}
@@ -69,7 +73,14 @@ export const JobsList = ({ job: parentJob }: jobsListProps): JSX.Element => {
       children={
         <List.Section title={viewName} subtitle={`${filteredJobs.length}`}>
           {filteredJobs.map(function (job: JobResult) {
-            return <JobListItem job={job} jobInfo={extraInfo[job.name]} key={job.name} />;
+            return (
+              <JobListItem
+                job={job}
+                jobInfo={extraInfo[job.name]}
+                key={job.name}
+                onUseAction={sortByUsage ? recordUsage : undefined}
+              />
+            );
           })}
         </List.Section>
       }
@@ -80,9 +91,10 @@ export const JobsList = ({ job: parentJob }: jobsListProps): JSX.Element => {
 type jobItemProps = {
   job: JobResult;
   jobInfo: ExtraInfo;
+  onUseAction?: (id: string | number) => void;
 };
 
-export const JobListItem = ({ job, jobInfo }: jobItemProps): JSX.Element => {
+export const JobListItem = ({ job, jobInfo, onUseAction }: jobItemProps): JSX.Element => {
   const hasJobs = jobInfo?.jobs || jobInfo?.builds;
   return (
     <List.Item
@@ -92,7 +104,9 @@ export const JobListItem = ({ job, jobInfo }: jobItemProps): JSX.Element => {
       key={job.name}
       actions={
         <ActionPanel>
-          {hasJobs && <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} />}
+          {hasJobs && (
+            <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} onPush={() => onUseAction?.(job.name)} />
+          )}
           <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
           <Action.CopyToClipboard title={"Copy Job Name"} content={jobInfo?.displayName} />
           <Action.OpenInBrowser
