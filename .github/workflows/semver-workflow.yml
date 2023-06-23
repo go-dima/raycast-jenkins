@@ -26,14 +26,14 @@ jobs:
           git fetch --tags --all -q
           tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           message=$(git log --format=%B -n 1 2>/dev/null || echo "empty")
-          
+
           bump_step="patch"
           if [[ $message == major:* ]]; then
             bump_step="major"
           elif [[ $message == minor:* ]]; then
             bump_step="minor"
           fi
-          
+
           new_version=$(semver -i ${bump_step} ${tag})
           echo "NEW_VERSION=${new_version}" >> $GITHUB_OUTPUT
 
