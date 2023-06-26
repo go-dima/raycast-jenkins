@@ -1,19 +1,19 @@
 import { fetchJsonData } from "./http";
 import { ExtraInfo, JobResult } from "./types";
 
-export function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<string, ExtraInfo>) {
+export function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<string, ExtraInfo>): JobResult[] {
   return jobs.filter((item) => {
     const matchingJobs = extraInfo[item.name]?.jobs
-      ?.filter((job) => includesFilterText(job.name))
+      ?.filter((job) => includesText(job.name, filterText))
       .map((job) => job.name);
     const matchingBuilds = extraInfo[item.name]?.builds
-      ?.filter((build) => includesFilterText(build.url))
+      ?.filter((build) => includesText(build.url, filterText))
       .map((build) => `#${build.number}`);
 
     const hasMatch =
       !filterText ||
-      includesFilterText(item.name) ||
-      includesFilterText(extraInfo[item.name]?.displayName) ||
+      includesText(item.name, filterText) ||
+      includesText(extraInfo[item.name]?.displayName, filterText) ||
       matchingJobs?.length ||
       matchingBuilds?.length;
 
@@ -22,13 +22,6 @@ export function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Rec
     }
 
     return hasMatch;
-
-    function includesFilterText(term: string): boolean {
-      if (!term) {
-        return false;
-      }
-      return term.toString().toLowerCase().includes(filterText.toString().toLowerCase());
-    }
   });
 }
 
@@ -60,4 +53,30 @@ export async function getExtraInfo(
   }, {});
   infoSetter(jobsWithExtraInfo);
   loadingSetter(false);
+}
+
+export function sortByTerm(toSort: JobResult[], term?: string): JobResult[] {
+  if (!term) {
+    return toSort;
+  }
+
+  const matching: JobResult[] = [];
+  const nonMatching: JobResult[] = [];
+
+  toSort.forEach((job) => {
+    if (includesText(job.name, term)) {
+      matching.push(job);
+    } else {
+      nonMatching.push(job);
+    }
+  });
+
+  return [...matching, ...nonMatching];
+}
+
+function includesText(term: string, toSearch: string): boolean {
+  if (!term) {
+    return false;
+  }
+  return term.toString().toLowerCase().includes(toSearch.toString().toLowerCase());
 }

@@ -2,7 +2,7 @@ import { Action, ActionPanel, Color, List } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { ExtraInfo, JobResult } from "./types";
 import { fetchJsonData } from "./http";
-import { filterJobs, getExtraInfo } from "./utils";
+import { filterJobs, getExtraInfo, sortByTerm } from "./utils";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 
 type ItemAccessory = {
@@ -37,9 +37,10 @@ function formatAccessory(color: string): ItemAccessory[] {
 type jobsListProps = {
   job: JobResult;
   sortByUsage?: boolean;
+  parentSearchTerm?: string;
 };
 
-export const JobsList = ({ job: parentJob, sortByUsage }: jobsListProps): JSX.Element => {
+export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobsListProps): JSX.Element => {
   const [jobs, setJobs] = useState<JobResult[]>([]);
   const [viewName, setViewName] = useState<string>("");
   const [extraInfo, setExtraInfo] = useState<Record<string, ExtraInfo>>({});
@@ -63,7 +64,7 @@ export const JobsList = ({ job: parentJob, sortByUsage }: jobsListProps): JSX.El
   }, [jobs]);
 
   const { data: sortedResults, recordUsage } = useUsageBasedSort<JobResult>(jobs || [], "jobs");
-  const filteredJobs = filterJobs(sortedResults, filterText, extraInfo);
+  const filteredJobs = sortByTerm(filterJobs(sortedResults, filterText, extraInfo), parentSearchTerm);
 
   return (
     <List
@@ -79,6 +80,7 @@ export const JobsList = ({ job: parentJob, sortByUsage }: jobsListProps): JSX.El
                 jobInfo={extraInfo[job.name]}
                 key={job.name}
                 onUseAction={sortByUsage ? recordUsage : undefined}
+                parentSearchTerm={filterText}
               />
             );
           })}
@@ -92,9 +94,10 @@ type jobItemProps = {
   job: JobResult;
   jobInfo: ExtraInfo;
   onUseAction?: (id: string | number) => void;
+  parentSearchTerm?: string;
 };
 
-export const JobListItem = ({ job, jobInfo, onUseAction }: jobItemProps): JSX.Element => {
+export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: jobItemProps): JSX.Element => {
   const hasJobs = jobInfo?.jobs || jobInfo?.builds;
   return (
     <List.Item
@@ -105,7 +108,11 @@ export const JobListItem = ({ job, jobInfo, onUseAction }: jobItemProps): JSX.El
       actions={
         <ActionPanel>
           {hasJobs && (
-            <Action.Push title={"Show Jobs"} target={<JobsList job={job} />} onPush={() => onUseAction?.(job.name)} />
+            <Action.Push
+              title={"Show Jobs"}
+              target={<JobsList job={job} parentSearchTerm={parentSearchTerm} />}
+              onPush={() => onUseAction?.(job.name)}
+            />
           )}
           <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
           <Action.CopyToClipboard title={"Copy Job Name"} content={jobInfo?.displayName} />

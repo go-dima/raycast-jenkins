@@ -63,7 +63,7 @@ export default function Command() {
                 <ActionPanel>
                   <Action.Push
                     title={"Show Jobs"}
-                    target={<JobsList job={job} sortByUsage={true} />}
+                    target={<JobsList job={job} sortByUsage={true} parentSearchTerm={searchText} />}
                     onPush={() => recordUsage(job.name)}
                   />
                   <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
