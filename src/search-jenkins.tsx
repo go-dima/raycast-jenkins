@@ -2,6 +2,8 @@ import axios, { HttpStatusCode } from "axios";
 import { Action, ActionPanel, getPreferenceValues, List, showToast, Toast } from "@raycast/api";
 import { useCallback, useState } from "react";
 import { authConfig } from "./http";
+import { useCachedState } from "@raycast/utils";
+import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 
 const { jenkinsUrl }: Preferences = getPreferenceValues();
 
@@ -18,7 +20,7 @@ function setUrl(s: SearchResult): SearchResult {
 export default function Command() {
   const [searchText, setSearchText] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [searchResult, setSearchResult] = useState<SearchResult[]>([]);
+  const [searchResult, setSearchResult] = useCachedState<SearchResult[]>(searchText, []);
 
   const onSearch = useCallback(
     async function doSearch(text: string) {
@@ -55,17 +57,22 @@ export default function Command() {
     [setSearchResult]
   );
 
+  const { data: sortedResults, recordUsage } = useUsageBasedSort<SearchResult>(searchResult || [], "serach");
   return (
     <List isLoading={isLoading} onSearchTextChange={onSearch} searchBarPlaceholder={"Search jenkins..."} throttle>
       <List.Section title="Total" subtitle={`${searchResult.length}`}>
-        {searchResult.map(function (result: SearchResult) {
+        {sortedResults.map(function (result: SearchResult) {
           return (
             <List.Item
               title={result.name}
               key={result.name}
               actions={
                 <ActionPanel>
-                  <Action.OpenInBrowser title={"Open In Browser"} url={`${result.url}`} />
+                  <Action.OpenInBrowser
+                    title={"Open In Browser"}
+                    url={`${result.url}`}
+                    onOpen={() => recordUsage(result.name)}
+                  />
                 </ActionPanel>
               }
             />
