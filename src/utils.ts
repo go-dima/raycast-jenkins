@@ -1,3 +1,4 @@
+import { Toast, showToast } from "@raycast/api";
 import { fetchJsonData } from "./http";
 import { ExtraInfo, JobResult } from "./types";
 
@@ -79,4 +80,8 @@ function includesText(term: string, toSearch: string): boolean {
     return false;
   }
   return term.toString().toLowerCase().includes(toSearch.toString().toLowerCase());
+}
+
+export function toastFailure(msg: unknown) {
+  showToast({ style: Toast.Style.Failure, title: "Fetch Failed", message: `${msg}` });
 }

@@ -1,21 +1,18 @@
 import { HttpStatusCode } from "axios";
-import { Action, ActionPanel, List, showToast, Toast } from "@raycast/api";
+import { Action, ActionPanel, List } from "@raycast/api";
 import { useCallback, useEffect, useState } from "react";
 import { ExtraInfo, JobResult } from "./types";
 import { fetchRootData } from "./http";
 import { JobsList } from "./jobslist";
-import { filterJobs, getExtraInfo } from "./utils";
+import { filterJobs, getExtraInfo, toastFailure } from "./utils";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
-
-function toastFailure(msg: unknown) {
-  showToast({ style: Toast.Style.Failure, title: "Search Failed", message: `${msg}` });
-}
+import { useCachedState } from "@raycast/utils";
 
 export default function Command() {
   const [searchText, setSearchText] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [searchResult, setSearchResult] = useState<JobResult[]>([]);
-  const [extraInfo, setExtraInfo] = useState<Record<string, ExtraInfo>>({});
+  const [jobsResult, setJobsResult] = useCachedState<JobResult[]>("command_jobsResult", []);
+  const [extraInfo, setExtraInfo] = useCachedState<Record<string, ExtraInfo>>("command_extraInfo", {});
 
   const onSearch = useCallback(
     async function doSearch() {
@@ -29,14 +26,14 @@ export default function Command() {
         }
 
         const { jobs }: { fullName: string; jobs: JobResult[] } = data;
-        setSearchResult(jobs);
+        setJobsResult(jobs);
       } catch (err) {
         toastFailure(err);
       } finally {
         setIsLoading(isLoading);
       }
     },
-    [setSearchResult]
+    [setJobsResult]
   );
 
   useEffect(() => {
@@ -44,19 +41,26 @@ export default function Command() {
   }, []);
 
   useEffect(() => {
-    getExtraInfo(searchResult, setIsLoading, setExtraInfo);
-  }, [searchResult]);
+    getExtraInfo(jobsResult, setIsLoading, setExtraInfo);
+  }, [jobsResult]);
 
-  const { data: sortedResults, recordUsage } = useUsageBasedSort<JobResult>(searchResult || [], "folders");
+  const { data: sortedResults, recordUsage } = useUsageBasedSort<JobResult>(jobsResult || [], "folders");
   const filteredResults = filterJobs(sortedResults, searchText, extraInfo);
 
   return (
-    <List isLoading={isLoading} onSearchTextChange={setSearchText} searchBarPlaceholder="Search for jobs..." throttle>
-      <List.Section title="Total" subtitle={`${searchResult.length}`}>
+    <List
+      isLoading={isLoading}
+      onSearchTextChange={setSearchText}
+      searchBarPlaceholder="Search for jobs..."
+      selectedItemId={filteredResults[0].name}
+      throttle
+    >
+      <List.Section title="Total" subtitle={`${jobsResult.length}`}>
         {filteredResults.map(function (job: JobResult) {
           return (
             <List.Item
               title={job.name}
+              id={job.name}
               key={job.name}
               subtitle={extraInfo[job.name]?.filterMatches?.join(", ")}
               actions={

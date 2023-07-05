@@ -4,6 +4,7 @@ import { ExtraInfo, JobResult } from "./types";
 import { fetchJsonData } from "./http";
 import { filterJobs, getExtraInfo, sortByTerm } from "./utils";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
+import { useCachedState } from "@raycast/utils";
 
 type ItemAccessory = {
   text: {
@@ -41,9 +42,9 @@ type jobsListProps = {
 };
 
 export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobsListProps): JSX.Element => {
-  const [jobs, setJobs] = useState<JobResult[]>([]);
-  const [viewName, setViewName] = useState<string>("");
-  const [extraInfo, setExtraInfo] = useState<Record<string, ExtraInfo>>({});
+  const [jobs, setJobs] = useCachedState<JobResult[]>(`${parentJob.name}_jobs`, []);
+  const [extraInfo, setExtraInfo] = useCachedState<Record<string, ExtraInfo>>(`${parentJob.name}_extrainfo`, {});
+  const [viewName, setViewName] = useCachedState<string>(`${parentJob.name}_viewname`, "");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [filterText, setFilterText] = useState<string>("");
 
@@ -71,6 +72,7 @@ export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobs
       isLoading={isLoading}
       onSearchTextChange={setFilterText}
       searchBarPlaceholder="Search for builds..."
+      selectedItemId={filteredJobs[0]?.name}
       children={
         <List.Section title={viewName} subtitle={`${filteredJobs.length}`}>
           {filteredJobs.map(function (job: JobResult) {
@@ -104,6 +106,7 @@ export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: job
       title={jobInfo?.displayName ?? job.name.toString()}
       subtitle={jobInfo?.filterMatches?.join(", ")}
       accessories={formatAccessory(jobInfo?.color ?? (jobInfo?.building ? "building" : jobInfo?.result))}
+      id={job.name}
       key={job.name}
       actions={
         <ActionPanel>
