@@ -72,7 +72,7 @@ export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobs
       isLoading={isLoading}
       onSearchTextChange={setFilterText}
       searchBarPlaceholder="Search for builds..."
-      selectedItemId={filteredJobs[0]?.name}
+      selectedItemId={filteredJobs.length > 0 ? filteredJobs[0]?.name : undefined}
       children={
         <List.Section title={viewName} subtitle={`${filteredJobs.length}`}>
           {filteredJobs.map(function (job: JobResult) {

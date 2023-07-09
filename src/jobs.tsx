@@ -52,7 +52,7 @@ export default function Command() {
       isLoading={isLoading}
       onSearchTextChange={setSearchText}
       searchBarPlaceholder="Search for jobs..."
-      selectedItemId={filteredResults[0].name}
+      selectedItemId={filteredResults.length > 0 ? filteredResults[0].name : undefined}
       throttle
     >
       <List.Section title="Total" subtitle={`${jobsResult.length}`}>
