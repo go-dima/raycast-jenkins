@@ -4,7 +4,7 @@
   "title": "Jenkins",
   "description": "Jenkins Runner Extension",
   "icon": "jenkins-kodem.png",
-  "author": "go_dima",
+  "author": "go-dima",
   "license": "MIT",
   "commands": [
     {

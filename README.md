@@ -1,3 +1,18 @@
-# first
+![GitHub tag](https://img.shields.io/github/v/tag/go-dima/raycast-jenkins)
 
-test
+# Jenkins Browser
+
+Search and brower Jenkins jobs.
+
+## Features
+
+- Global job search
+- Browse jobs details
+
+## Author
+
+[Dima Go](https://github.com/go-dima)
+
+## License
+
+[MIT](./LICENSE)
