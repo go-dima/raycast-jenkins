@@ -1,8 +1,8 @@
-![GitHub tag](https://img.shields.io/github/v/tag/go-dima/raycast-jenkins)
+![GitHub tag](https://img.shields.io/github/v/tag/go-dima/raycast-jenkins?label=version)
 
 # Jenkins Browser
 
-Search and brower Jenkins jobs.
+Search and browse Jenkins jobs.
 
 ## Features
 
