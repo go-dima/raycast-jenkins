@@ -35,21 +35,29 @@ export async function getExtraInfo(
   const jobsWithExtraInfo = (
     await Promise.all(
       jobs.map(async (job) => {
-        const { data }: { data: ExtraInfo } = await fetchJsonData(job.url);
-        if (data) {
-          // if the item is job, we want to use the color from the parent
-          data.color = data.color ?? job.color;
-        }
-        return (
-          data && {
-            name: job.name,
-            extra: data as ExtraInfo,
+        try {
+          const { data }: { data: ExtraInfo } = await fetchJsonData(job.url);
+
+          if (data) {
+            // if the item is job, we want to use the color from the parent
+            data.color = data.color ?? job.color;
           }
-        );
+          return (
+            data && {
+              name: job.name,
+              extra: data as ExtraInfo,
+            }
+          );
+        } catch (err) {
+          console.error("fetchJsonData", err);
+          return undefined;
+        }
       })
     )
   ).reduce((acc: Record<string, ExtraInfo>, ele) => {
-    acc[ele.name] = ele.extra;
+    if (ele) {
+      acc[ele.name] = ele.extra;
+    }
     return acc;
   }, {});
   infoSetter(jobsWithExtraInfo);

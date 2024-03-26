@@ -42,3 +42,17 @@ export async function fetchJsonData(url: string): Promise<fetchResponse> {
 export async function fetchRootData(): Promise<fetchResponse> {
   return await fetchJsonData(jenkinsUrl);
 }
+
+export async function postJsonData(url: string, data: Record<string, string>): Promise<fetchResponse> {
+  const encodedParams = Object.fromEntries(
+    Object.entries(data).map(([key, value]) => [key, encodeURIComponent(value)])
+  );
+  const postUrl = `${url}?${new URLSearchParams(encodedParams).toString()}`;
+
+  return await axios.request({
+    ...authConfig,
+    url: postUrl,
+    method: "post",
+    data,
+  });
+}

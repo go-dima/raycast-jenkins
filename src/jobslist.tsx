@@ -1,7 +1,7 @@
 import { Action, ActionPanel, Color, List } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { ExtraInfo, JobResult } from "./types";
-import { fetchJsonData } from "./http";
+import { fetchJsonData, postJsonData } from "./http";
 import { filterJobs, getExtraInfo, sortByTerm } from "./utils";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 import { useCachedState } from "@raycast/utils";
@@ -41,21 +41,28 @@ type jobsListProps = {
   parentSearchTerm?: string;
 };
 
+// Dima: need to see what fails: fetch of extra info
+// I see that the cahce causes fetching of old data that was already deleted
+// That's why a 404 is returned - the job was deleted
 export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobsListProps): JSX.Element => {
   const [jobs, setJobs] = useCachedState<JobResult[]>(`${parentJob.name}_jobs`, []);
-  const [extraInfo, setExtraInfo] = useCachedState<Record<string, ExtraInfo>>(`${parentJob.name}_extrainfo`, {});
+  // const [extraInfo, setExtraInfo] = useCachedState<Record<string, ExtraInfo>>(`${parentJob.name}_extrainfo`, {});
+  const [extraInfo, setExtraInfo] = useState<Record<string, ExtraInfo>>({});
   const [viewName, setViewName] = useCachedState<string>(`${parentJob.name}_viewname`, "");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [filterText, setFilterText] = useState<string>("");
 
   useEffect(() => {
     async function getJobs() {
-      const {
-        data: { fullName, jobs, builds },
-      }: { data: ExtraInfo } = await fetchJsonData(parentJob.url);
-
-      setViewName(fullName);
-      setJobs(jobs ?? builds?.map((build) => ({ name: build.number.toString(), url: build.url })));
+      try {
+        const {
+          data: { fullName, jobs, builds },
+        }: { data: ExtraInfo } = await fetchJsonData(parentJob.url);
+        setViewName(fullName);
+        setJobs(jobs ?? builds?.map((build) => ({ name: build.number.toString(), url: build.url })));
+      } catch (err) {
+        console.error("getJobs", err);
+      }
     }
     getJobs();
   }, []);
@@ -101,9 +108,11 @@ type jobItemProps = {
 
 export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: jobItemProps): JSX.Element => {
   const hasJobs = jobInfo?.jobs || jobInfo?.builds;
+  const isBuildable = jobInfo?._class == "org.jenkinsci.plugins.workflow.job.WorkflowJob";
+
   return (
     <List.Item
-      title={jobInfo?.displayName ?? job.name.toString()}
+      title={`${jobInfo?.displayName ?? job.name.toString()}${isBuildable ? " 🛠️" : ""}`}
       subtitle={jobInfo?.filterMatches?.join(", ")}
       accessories={formatAccessory(jobInfo?.color ?? (jobInfo?.building ? "building" : jobInfo?.result))}
       id={job.name}
@@ -124,6 +133,20 @@ export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: job
             title={"Open Json For Debug"}
             url={`${job.url}api/json`}
           />
+          {isBuildable && (
+            <Action
+              shortcut={{ modifiers: ["cmd"], key: "b" }}
+              title={"Deploy to Namespace"}
+              onAction={() => {
+                onUseAction?.(job.name);
+                postJsonData(`${job.url}buildWithParameters`, {
+                  DEPLOY_TO_NAMESPACE: "my namespace",
+                  SOURCE_ENVIRONMENT: "auto",
+                  IMAGE_NAME_AND_TAG: "",
+                });
+              }}
+            />
+          )}
         </ActionPanel>
       }
     />
