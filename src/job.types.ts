@@ -1,3 +1,5 @@
+import { PropertyType } from "./property.types";
+
 export const USAGE_KEY = "scores-";
 
 export interface JobResult {
@@ -21,12 +23,13 @@ export interface ExtraInfo {
   jobs: JobResult[];
   builds: BuildResult[];
   filterMatches?: string[];
+  property: PropertyType[];
 }
 
 export const JobClassOptions = {
-  "org.jenkinsci.plugins.workflow.job.WorkflowJob": "WorkflowJob",
-  "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject": "WorkflowMultiBranchProject",
-  "org.jenkinsci.plugins.workflow.job.WorkflowRun": "WorkflowRun",
+  WorkflowJob: "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+  WorkflowMultiBranchProject: "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject",
+  WorkflowRun: "org.jenkinsci.plugins.workflow.job.WorkflowRun",
 } as const;
 
 export type JobClass = keyof typeof JobClassOptions;

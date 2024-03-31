@@ -1,10 +1,11 @@
-import { Action, ActionPanel, Color, List } from "@raycast/api";
+import { Action, ActionPanel, Color, Form, List } from "@raycast/api";
 import { useEffect, useState } from "react";
-import { ExtraInfo, JobResult } from "./types";
+import { ExtraInfo, JobClassOptions, JobResult } from "./job.types";
 import { fetchJsonData, postJsonData } from "./http";
 import { filterJobs, getExtraInfo, sortByTerm } from "./utils";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 import { useCachedState } from "@raycast/utils";
+import { ParametersDefinitionProperty } from "./property.types";
 
 type ItemAccessory = {
   text: {
@@ -108,7 +109,7 @@ type jobItemProps = {
 
 export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: jobItemProps): JSX.Element => {
   const hasJobs = jobInfo?.jobs || jobInfo?.builds;
-  const isBuildable = jobInfo?._class == "org.jenkinsci.plugins.workflow.job.WorkflowJob";
+  const isBuildable = (jobInfo?._class as string) == JobClassOptions.WorkflowJob;
 
   return (
     <List.Item
@@ -142,9 +143,16 @@ export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: job
                 postJsonData(`${job.url}buildWithParameters`, {
                   DEPLOY_TO_NAMESPACE: "my namespace",
                   SOURCE_ENVIRONMENT: "auto",
-                  IMAGE_NAME_AND_TAG: "",
+                  // IMAGE_NAME_AND_TAG: "",
                 });
               }}
+            />
+          )}
+          {isBuildable && (
+            <Action.Push
+              title={"Show Builds"}
+              shortcut={{ modifiers: ["cmd"], key: "f" }}
+              target={<JobForm job={job} jobInfo={jobInfo} />}
             />
           )}
         </ActionPanel>
@@ -152,3 +160,30 @@ export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: job
     />
   );
 };
+
+type FormProps = {
+  job: JobResult;
+  jobInfo: ExtraInfo;
+};
+
+function JobForm({ job, jobInfo }: FormProps) {
+  const parameters = jobInfo?.property?.find(
+    (prop) => prop._class === "hudson.model.ParametersDefinitionProperty"
+  ) as ParametersDefinitionProperty;
+
+  return (
+    <Form navigationTitle={`${jobInfo?.displayName ?? job.name.toString()}`}>
+      {parameters?.parameterDefinitions.map((param) => {
+        return (
+          <Form.TextField
+            id={param.name + param._class}
+            key={param.name}
+            title={param.name}
+            placeholder={param.description}
+            value={`${param.defaultParameterValue.value}`}
+          />
+        );
+      })}
+    </Form>
+  );
+}

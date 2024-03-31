@@ -1,6 +1,6 @@
 import { Toast, showToast } from "@raycast/api";
 import { fetchJsonData } from "./http";
-import { ExtraInfo, JobResult } from "./types";
+import { ExtraInfo, JobResult } from "./job.types";
 
 export function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<string, ExtraInfo>): JobResult[] {
   return jobs.filter((item) => {

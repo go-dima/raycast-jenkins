@@ -1,7 +1,7 @@
 import { HttpStatusCode } from "axios";
 import { Action, ActionPanel, List } from "@raycast/api";
 import { useCallback, useEffect, useState } from "react";
-import { ExtraInfo, JobResult } from "./types";
+import { ExtraInfo, JobResult } from "./job.types";
 import { fetchRootData } from "./http";
 import { JobsList } from "./jobslist";
 import { filterJobs, getExtraInfo, toastFailure } from "./utils";
