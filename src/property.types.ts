@@ -34,3 +34,11 @@ export type DisableConcurrentBuildsJobProperty = {
 
 // Union type for all possible types
 export type PropertyType = BranchJobProperty | DisableConcurrentBuildsJobProperty | ParametersDefinitionProperty;
+
+export const ParameterTypeValues = {
+  Boolean: "BooleanParameterDefinition",
+  String: "StringParameterDefinition",
+  Choice: "ChoiceParameterDefinition",
+} as const;
+
+export type ParameterType = keyof typeof ParameterTypeValues;

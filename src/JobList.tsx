@@ -1,11 +1,11 @@
-import { Action, ActionPanel, Color, Form, List } from "@raycast/api";
+import { Action, ActionPanel, Color, List } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { ExtraInfo, JobClassOptions, JobResult } from "./job.types";
 import { fetchJsonData, postJsonData } from "./http";
 import { filterJobs, getExtraInfo, sortByTerm } from "./utils";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 import { useCachedState } from "@raycast/utils";
-import { ParametersDefinitionProperty } from "./property.types";
+import { JobForm } from "./JobForm";
 
 type ItemAccessory = {
   text: {
@@ -160,30 +160,3 @@ export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: job
     />
   );
 };
-
-type FormProps = {
-  job: JobResult;
-  jobInfo: ExtraInfo;
-};
-
-function JobForm({ job, jobInfo }: FormProps) {
-  const parameters = jobInfo?.property?.find(
-    (prop) => prop._class === "hudson.model.ParametersDefinitionProperty"
-  ) as ParametersDefinitionProperty;
-
-  return (
-    <Form navigationTitle={`${jobInfo?.displayName ?? job.name.toString()}`}>
-      {parameters?.parameterDefinitions.map((param) => {
-        return (
-          <Form.TextField
-            id={param.name + param._class}
-            key={param.name}
-            title={param.name}
-            placeholder={param.description}
-            value={`${param.defaultParameterValue.value}`}
-          />
-        );
-      })}
-    </Form>
-  );
-}
