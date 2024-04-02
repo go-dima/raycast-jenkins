@@ -2,6 +2,7 @@ import { Action, ActionPanel, Form } from "@raycast/api";
 import { ReactElement } from "react";
 import { ExtraInfo, JobResult } from "./job.types";
 import { ParameterDefinition, ParameterTypeValues, ParametersDefinitionProperty } from "./property.types";
+import { buildWithParameters } from "./http";
 
 type FormProps = {
   job: JobResult;
@@ -22,6 +23,7 @@ export function JobForm({ job, jobInfo }: FormProps) {
             title="Build"
             onSubmit={(values): void => {
               console.warn("onSubmit", values);
+              buildWithParameters(job.url, values);
             }}
           />
         </ActionPanel>

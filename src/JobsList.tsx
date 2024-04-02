@@ -1,7 +1,7 @@
 import { Action, ActionPanel, Color, List } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { ExtraInfo, JobClassOptions, JobResult } from "./job.types";
-import { fetchJsonData, postJsonData } from "./http";
+import { buildWithParameters, fetchJsonData, postJsonData } from "./http";
 import { filterJobs, getExtraInfo, sortByTerm } from "./utils";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 import { useCachedState } from "@raycast/utils";
@@ -140,7 +140,7 @@ export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: job
               title={"Deploy to Namespace"}
               onAction={() => {
                 onUseAction?.(job.name);
-                postJsonData(`${job.url}buildWithParameters`, {
+                buildWithParameters(job.url, {
                   DEPLOY_TO_NAMESPACE: "my namespace",
                   SOURCE_ENVIRONMENT: "auto",
                   // IMAGE_NAME_AND_TAG: "",
