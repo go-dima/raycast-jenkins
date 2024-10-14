@@ -63,6 +63,6 @@ export async function buildWithParameters(url: string, params: Record<string, st
     showToast({ style: Toast.Style.Success, title: "Build started" });
   } catch (error) {
     console.error(error);
-    showToast({ style: Toast.Style.Failure, title: "Failed to start build" });
+    showToast({ style: Toast.Style.Failure, title: "Error", message: "Failed to start build" });
   }
 }
