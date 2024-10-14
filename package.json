@@ -10,13 +10,13 @@
     {
       "name": "search-jenkins",
       "title": "Search Jenkins",
-      "description": "Disaply jenkins serach results",
+      "description": "Display jenkins serach results",
       "mode": "view"
     },
     {
       "name": "jobs",
       "title": "View Jobs",
-      "description": "Disaply jenkins jobs",
+      "description": "Display jenkins jobs",
       "mode": "view"
     }
   ],
