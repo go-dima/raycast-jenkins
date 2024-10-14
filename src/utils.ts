@@ -64,23 +64,20 @@ export async function getExtraInfo(
   loadingSetter(false);
 }
 
-export function sortByTerm(toSort: JobResult[], term?: string): JobResult[] {
+export function sortByTerm(toSort: JobResult[], term = ""): JobResult[] {
+  // Split into 'main' job and rest of jobs
+  const main = toSort.find((job) => job.name === "main");
+  const rest = toSort.filter((job) => job.name !== "main");
+
   if (!term) {
-    return toSort;
+    return main ? [main, ...rest] : rest;
   }
 
-  const matching: JobResult[] = [];
-  const nonMatching: JobResult[] = [];
+  // If term exists, sort the rest based on matching
+  const matching = rest.filter((job) => includesText(job.name, term));
+  const nonMatching = rest.filter((job) => !includesText(job.name, term));
 
-  toSort.forEach((job) => {
-    if (includesText(job.name, term)) {
-      matching.push(job);
-    } else {
-      nonMatching.push(job);
-    }
-  });
-
-  return [...matching, ...nonMatching];
+  return main ? [main, ...matching, ...nonMatching] : [...matching, ...nonMatching];
 }
 
 function includesText(term: string, toSearch: string): boolean {
