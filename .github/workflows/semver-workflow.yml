@@ -1,7 +1,7 @@
 name: Version Bump
 
 on:
-  push:
+  # push:
   # pull_request:
   #   branches:
   #     - main
