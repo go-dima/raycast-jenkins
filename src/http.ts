@@ -44,16 +44,11 @@ export async function fetchRootData(): Promise<fetchResponse> {
 }
 
 export async function postJsonData(url: string, params: Record<string, string>) {
-  const paramsString = Object.keys(params)
-    .map((key) => `${encodeURIComponent(key)}\\=${encodeURIComponent(params[key])}`)
-    .join("\\&");
-  const postUrl = `${url}?${paramsString}`;
-  console.warn(postUrl);
-
   await axios.request({
     ...authConfig,
-    url: postUrl,
+    url,
     method: "POST",
+    params,
   });
 }
 

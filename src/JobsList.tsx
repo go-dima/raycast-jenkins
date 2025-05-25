@@ -1,7 +1,7 @@
 import { Action, ActionPanel, Color, List } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { ExtraInfo, JobClassOptions, JobResult } from "./job.types";
-import { buildWithParameters, fetchJsonData, postJsonData } from "./http";
+import { buildWithParameters, fetchJsonData } from "./http";
 import { filterJobs, getExtraInfo, sortByTerm } from "./utils";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 import { useCachedState } from "@raycast/utils";
