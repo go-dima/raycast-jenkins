@@ -120,6 +120,13 @@ export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: job
       key={job.name}
       actions={
         <ActionPanel>
+          {isBuildable && (
+            <Action.Push
+              title={"Build Job"}
+              shortcut={{ modifiers: ["cmd"], key: "b" }}
+              target={<JobForm job={job} jobInfo={jobInfo} />}
+            />
+          )}
           {hasJobs && (
             <Action.Push
               title={"Show Jobs"}
@@ -134,27 +141,6 @@ export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: job
             title={"Open Json For Debug"}
             url={`${job.url}api/json`}
           />
-          {isBuildable && (
-            <Action
-              shortcut={{ modifiers: ["cmd"], key: "b" }}
-              title={"Deploy to Namespace"}
-              onAction={() => {
-                onUseAction?.(job.name);
-                buildWithParameters(job.url, {
-                  DEPLOY_TO_NAMESPACE: "my namespace",
-                  SOURCE_ENVIRONMENT: "auto",
-                  // IMAGE_NAME_AND_TAG: "",
-                });
-              }}
-            />
-          )}
-          {isBuildable && (
-            <Action.Push
-              title={"Show Builds"}
-              shortcut={{ modifiers: ["cmd"], key: "f" }}
-              target={<JobForm job={job} jobInfo={jobInfo} />}
-            />
-          )}
         </ActionPanel>
       }
     />

@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Form } from "@raycast/api";
+import { Action, ActionPanel, Form, popToRoot } from "@raycast/api";
 import { ReactElement } from "react";
 import { ExtraInfo, JobResult } from "./job.types";
 import { ParameterDefinition, ParameterTypeValues, ParametersDefinitionProperty } from "./property.types";
@@ -22,8 +22,8 @@ export function JobForm({ job, jobInfo }: FormProps) {
           <Action.SubmitForm
             title="Build"
             onSubmit={(values): void => {
-              console.warn("onSubmit", values);
               buildWithParameters(job.url, values);
+              popToRoot();
             }}
           />
         </ActionPanel>
