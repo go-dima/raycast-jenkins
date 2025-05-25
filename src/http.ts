@@ -1,8 +1,8 @@
-import { getPreferenceValues } from "@raycast/api";
+import { Toast, getPreferenceValues, showToast } from "@raycast/api";
 import axios from "axios";
 import https from "https";
 import { encode } from "js-base64";
-import { ExtraInfo } from "./types";
+import { ExtraInfo } from "./job.types";
 
 interface Preferences {
   jenkinsUrl: string;
@@ -43,16 +43,21 @@ export async function fetchRootData(): Promise<fetchResponse> {
   return await fetchJsonData(jenkinsUrl);
 }
 
-export async function postJsonData(url: string, data: Record<string, string>): Promise<fetchResponse> {
-  const encodedParams = Object.fromEntries(
-    Object.entries(data).map(([key, value]) => [key, encodeURIComponent(value)])
-  );
-  const postUrl = `${url}?${new URLSearchParams(encodedParams).toString()}`;
-
-  return await axios.request({
+export async function postJsonData(url: string, params: Record<string, string>) {
+  await axios.request({
     ...authConfig,
-    url: postUrl,
-    method: "post",
-    data,
+    url,
+    method: "POST",
+    params,
   });
+}
+
+export async function buildWithParameters(url: string, params: Record<string, string>) {
+  try {
+    postJsonData(`${url}buildWithParameters`, params);
+    showToast({ style: Toast.Style.Success, title: "Build started" });
+  } catch (error) {
+    console.error(error);
+    showToast({ style: Toast.Style.Failure, title: "Error", message: "Failed to start build" });
+  }
 }

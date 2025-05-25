@@ -1,4 +1,4 @@
-import { USAGE_KEY } from "../types";
+import { USAGE_KEY } from "../job.types";
 import { useLocalStorage } from "./useLocalStorage";
 import { Usages, getCalculatedScore } from "./utils";
 

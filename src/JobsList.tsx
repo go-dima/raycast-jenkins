@@ -1,10 +1,11 @@
 import { Action, ActionPanel, Color, List } from "@raycast/api";
 import { useEffect, useState } from "react";
-import { ExtraInfo, JobResult } from "./types";
-import { fetchJsonData, postJsonData } from "./http";
+import { ExtraInfo, JobClassOptions, JobResult } from "./job.types";
+import { buildWithParameters, fetchJsonData } from "./http";
 import { filterJobs, getExtraInfo, sortByTerm } from "./utils";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 import { useCachedState } from "@raycast/utils";
+import { JobForm } from "./JobForm";
 
 type ItemAccessory = {
   text: {
@@ -108,7 +109,7 @@ type jobItemProps = {
 
 export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: jobItemProps): JSX.Element => {
   const hasJobs = jobInfo?.jobs || jobInfo?.builds;
-  const isBuildable = jobInfo?._class == "org.jenkinsci.plugins.workflow.job.WorkflowJob";
+  const isBuildable = (jobInfo?._class as string) == JobClassOptions.WorkflowJob;
 
   return (
     <List.Item
@@ -119,6 +120,13 @@ export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: job
       key={job.name}
       actions={
         <ActionPanel>
+          {isBuildable && (
+            <Action.Push
+              title={"Build Job"}
+              shortcut={{ modifiers: ["cmd"], key: "b" }}
+              target={<JobForm job={job} jobInfo={jobInfo} />}
+            />
+          )}
           {hasJobs && (
             <Action.Push
               title={"Show Jobs"}
@@ -133,20 +141,6 @@ export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: job
             title={"Open Json For Debug"}
             url={`${job.url}api/json`}
           />
-          {isBuildable && (
-            <Action
-              shortcut={{ modifiers: ["cmd"], key: "b" }}
-              title={"Deploy to Namespace"}
-              onAction={() => {
-                onUseAction?.(job.name);
-                postJsonData(`${job.url}buildWithParameters`, {
-                  DEPLOY_TO_NAMESPACE: "my namespace",
-                  SOURCE_ENVIRONMENT: "auto",
-                  IMAGE_NAME_AND_TAG: "",
-                });
-              }}
-            />
-          )}
         </ActionPanel>
       }
     />
