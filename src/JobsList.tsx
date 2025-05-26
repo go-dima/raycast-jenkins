@@ -134,7 +134,7 @@ export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: job
               onPush={() => onUseAction?.(job.name)}
             />
           )}
-          <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
+          <Action.OpenInBrowser title={"Open In Browser"} shortcut={{ modifiers: ["cmd"], key: "o" }} url={job.url} />
           <Action.CopyToClipboard title={"Copy Job Name"} content={jobInfo?.displayName} />
           <Action.OpenInBrowser
             shortcut={{ modifiers: ["cmd"], key: "j" }}
