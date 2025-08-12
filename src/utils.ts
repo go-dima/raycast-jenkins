@@ -77,7 +77,7 @@ export function sortByTerm(toSort: JobResult[], term = ""): JobResult[] {
   const matching = rest.filter((job) => includesText(job.name, term));
   const nonMatching = rest.filter((job) => !includesText(job.name, term));
 
-  return main ? [main, ...matching, ...nonMatching] : [...matching, ...nonMatching];
+  return main ? [...matching, main, ...nonMatching] : [...matching, ...nonMatching];
 }
 
 function includesText(term: string, toSearch: string): boolean {
