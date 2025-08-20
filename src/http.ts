@@ -1,7 +1,8 @@
-import { Toast, getPreferenceValues, showToast } from "@raycast/api";
+import { getPreferenceValues, showToast, Toast } from "@raycast/api";
 import axios from "axios";
 import https from "https";
 import { encode } from "js-base64";
+import { JobTracker } from "./job-tracker";
 import { ExtraInfo } from "./job.types";
 
 interface Preferences {
@@ -43,21 +44,34 @@ export async function fetchRootData(): Promise<fetchResponse> {
   return await fetchJsonData(jenkinsUrl);
 }
 
-export async function postJsonData(url: string, params: Record<string, string>) {
-  await axios.request({
-    ...authConfig,
-    url,
-    method: "POST",
-    params,
-  });
-}
-
-export async function buildWithParameters(url: string, params: Record<string, string>) {
+export async function buildWithParameters(
+  url: string,
+  params: Record<string, string>,
+  jobName: string,
+  displayName: string
+) {
   try {
     postJsonData(`${url}buildWithParameters`, params);
+    await JobTracker.addTrackedJob(jobName, url, displayName);
+
     showToast({ style: Toast.Style.Success, title: "Build started" });
   } catch (error) {
     console.error(error);
     showToast({ style: Toast.Style.Failure, title: "Error", message: "Failed to start build" });
   }
+}
+
+export function postJsonData(url: string, params: Record<string, string>) {
+  // axios.request({
+  //   ...authConfig,
+  //   url,
+  //   method: "POST",
+  //   params,
+  // });
+  // nokodemcode
+  return axios.post(url, params, {
+    headers: {
+      ...authConfig.headers,
+    },
+  });
 }

@@ -18,6 +18,13 @@
       "title": "View Jobs",
       "description": "Display jenkins jobs",
       "mode": "view"
+    },
+    {
+      "name": "jenkins-menu-bar",
+      "title": "Jenkins Jobs Progress",
+      "description": "Track progress of user-initiated Jenkins jobs in menu bar",
+      "mode": "menu-bar",
+      "interval": "1m"
     }
   ],
   "preferences": [

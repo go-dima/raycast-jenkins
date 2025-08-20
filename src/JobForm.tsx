@@ -22,7 +22,7 @@ export function JobForm({ job, jobInfo }: FormProps) {
           <Action.SubmitForm
             title="Build"
             onSubmit={(values): void => {
-              buildWithParameters(job.url, values);
+              buildWithParameters(job.url, values, job.name, jobInfo?.displayName ?? job.name);
               popToRoot();
             }}
           />
