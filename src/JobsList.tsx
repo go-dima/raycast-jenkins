@@ -1,11 +1,15 @@
-import { Action, ActionPanel, Color, List } from "@raycast/api";
+import { Action, ActionPanel, Color, Icon, List } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { ExtraInfo, JobClassOptions, JobResult } from "./job.types";
-import { buildWithParameters, fetchJsonData } from "./http";
+import { fetchJsonData } from "./http";
 import { filterJobs, getExtraInfo, sortByTerm } from "./utils";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
-import { useCachedState } from "@raycast/utils";
+import { useCachedState, useCachedPromise } from "@raycast/utils";
 import { JobForm } from "./JobForm";
+import { JenkinsJobService } from "./favorites";
+
+const buildableMark = " 🔨";
+const favoriteMark = " ⭐";
 
 type ItemAccessory = {
   text: {
@@ -47,11 +51,12 @@ type jobsListProps = {
 // That's why a 404 is returned - the job was deleted
 export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobsListProps): JSX.Element => {
   const [jobs, setJobs] = useCachedState<JobResult[]>(`${parentJob.name}_jobs`, []);
-  // const [extraInfo, setExtraInfo] = useCachedState<Record<string, ExtraInfo>>(`${parentJob.name}_extrainfo`, {});
   const [extraInfo, setExtraInfo] = useState<Record<string, ExtraInfo>>({});
   const [viewName, setViewName] = useCachedState<string>(`${parentJob.name}_viewname`, "");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [filterText, setFilterText] = useState<string>("");
+
+  const { data: favoriteJobUrls = [], revalidate: revalidateFavorites } = useCachedPromise(JenkinsJobService.favorites);
 
   useEffect(() => {
     async function getJobs() {
@@ -75,15 +80,20 @@ export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobs
   const { data: sortedResults, recordUsage } = useUsageBasedSort<JobResult>(jobs || [], "jobs");
   const filteredJobs = sortByTerm(filterJobs(sortedResults, filterText, extraInfo), parentSearchTerm);
 
+  // Separate favorite and non-favorite jobs
+  const favoriteJobs = filteredJobs.filter((job) => favoriteJobUrls.includes(job.url));
+  const nonFavoriteJobs = filteredJobs.filter((job) => !favoriteJobUrls.includes(job.url));
+
   return (
     <List
       isLoading={isLoading}
       onSearchTextChange={setFilterText}
       searchBarPlaceholder="Search for builds..."
       selectedItemId={filteredJobs.length > 0 ? filteredJobs[0]?.name : undefined}
-      children={
-        <List.Section title={viewName} subtitle={`${filteredJobs.length}`}>
-          {filteredJobs.map(function (job: JobResult) {
+    >
+      {!!favoriteJobs.length && (
+        <List.Section title="Favorites" subtitle={`${favoriteJobs.length}`}>
+          {favoriteJobs.map(function (job: JobResult) {
             return (
               <JobListItem
                 job={job}
@@ -91,12 +101,29 @@ export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobs
                 key={job.name}
                 onUseAction={sortByUsage ? recordUsage : undefined}
                 parentSearchTerm={filterText}
+                isFavorite
+                revalidateFavorites={revalidateFavorites}
               />
             );
           })}
         </List.Section>
-      }
-    />
+      )}
+      <List.Section title={viewName} subtitle={`${nonFavoriteJobs.length}`}>
+        {nonFavoriteJobs.map(function (job: JobResult) {
+          return (
+            <JobListItem
+              job={job}
+              jobInfo={extraInfo[job.name]}
+              key={job.name}
+              onUseAction={sortByUsage ? recordUsage : undefined}
+              parentSearchTerm={filterText}
+              isFavorite={false}
+              revalidateFavorites={revalidateFavorites}
+            />
+          );
+        })}
+      </List.Section>
+    </List>
   );
 };
 
@@ -105,15 +132,26 @@ type jobItemProps = {
   jobInfo: ExtraInfo;
   onUseAction?: (id: string | number) => void;
   parentSearchTerm?: string;
+  isFavorite: boolean;
+  revalidateFavorites: () => void;
 };
 
-export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: jobItemProps): JSX.Element => {
+export const JobListItem = ({
+  job,
+  jobInfo,
+  onUseAction,
+  parentSearchTerm,
+  isFavorite,
+  revalidateFavorites,
+}: jobItemProps): JSX.Element => {
   const hasJobs = jobInfo?.jobs || jobInfo?.builds;
   const isBuildable = (jobInfo?._class as string) == JobClassOptions.WorkflowJob;
 
   return (
     <List.Item
-      title={`${jobInfo?.displayName ?? job.name.toString()}${isBuildable ? " 🛠️" : ""}`}
+      title={`${jobInfo?.displayName ?? job.name.toString()}${isBuildable ? buildableMark : ""}${
+        isFavorite ? favoriteMark : ""
+      }`}
       subtitle={jobInfo?.filterMatches?.join(", ")}
       accessories={formatAccessory(jobInfo?.color ?? (jobInfo?.building ? "building" : jobInfo?.result))}
       id={job.name}
@@ -134,6 +172,19 @@ export const JobListItem = ({ job, jobInfo, onUseAction, parentSearchTerm }: job
               onPush={() => onUseAction?.(job.name)}
             />
           )}
+          <Action
+            title={isFavorite ? "Remove From Favorites" : "Add to Favorites"}
+            icon={isFavorite ? Icon.StarDisabled : Icon.Star}
+            onAction={async () => {
+              if (isFavorite) {
+                await JenkinsJobService.removeFromFavorites(job);
+              } else {
+                await JenkinsJobService.addToFavorites(job);
+              }
+              revalidateFavorites();
+            }}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "f" }}
+          />
           <Action.OpenInBrowser title={"Open In Browser"} url={job.url} shortcut={{ modifiers: ["cmd"], key: "o" }} />
           <Action.CopyToClipboard title={"Copy Job Name"} content={jobInfo?.displayName} />
           <Action.OpenInBrowser

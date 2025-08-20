@@ -1,18 +1,21 @@
 import { HttpStatusCode } from "axios";
-import { Action, ActionPanel, List } from "@raycast/api";
+import { Action, ActionPanel, Icon, List } from "@raycast/api";
 import { useCallback, useEffect, useState } from "react";
 import { ExtraInfo, JobResult } from "./job.types";
 import { fetchRootData } from "./http";
 import { JobsList } from "./JobsList";
 import { filterJobs, getExtraInfo, toastFailure } from "./utils";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
-import { useCachedState } from "@raycast/utils";
+import { useCachedState, useCachedPromise } from "@raycast/utils";
+import { JenkinsJobService } from "./favorites";
 
 export default function Command() {
   const [searchText, setSearchText] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [jobsResult, setJobsResult] = useCachedState<JobResult[]>("command_jobsResult", []);
   const [extraInfo, setExtraInfo] = useCachedState<Record<string, ExtraInfo>>("command_extraInfo", {});
+
+  const { data: favoriteJobUrls = [], revalidate: revalidateFavorites } = useCachedPromise(JenkinsJobService.favorites);
 
   const onSearch = useCallback(
     async function doSearch() {
@@ -47,6 +50,10 @@ export default function Command() {
   const { data: sortedResults, recordUsage } = useUsageBasedSort<JobResult>(jobsResult || [], "folders");
   const filteredResults = filterJobs(sortedResults, searchText, extraInfo);
 
+  // Separate favorite and non-favorite jobs
+  const favoriteJobs = filteredResults.filter((job) => favoriteJobUrls.includes(job.url));
+  const nonFavoriteJobs = filteredResults.filter((job) => !favoriteJobUrls.includes(job.url));
+
   return (
     <List
       isLoading={isLoading}
@@ -55,8 +62,41 @@ export default function Command() {
       selectedItemId={filteredResults.length > 0 ? filteredResults[0].name : undefined}
       throttle
     >
-      <List.Section title="Total" subtitle={`${jobsResult.length}`}>
-        {filteredResults.map(function (job: JobResult) {
+      {!!favoriteJobs.length && (
+        <List.Section title="Favorites" subtitle={`${favoriteJobs.length}`}>
+          {favoriteJobs.map(function (job: JobResult) {
+            return (
+              <List.Item
+                title={`${job.name} ⭐`}
+                id={job.name}
+                key={job.name}
+                subtitle={extraInfo[job.name]?.filterMatches?.join(", ")}
+                actions={
+                  <ActionPanel>
+                    <Action.Push
+                      title={"Show Jobs"}
+                      target={<JobsList job={job} sortByUsage parentSearchTerm={searchText} />}
+                      onPush={() => recordUsage(job.name)}
+                    />
+                    <Action
+                      title={"Remove From Favorites"}
+                      icon={Icon.StarDisabled}
+                      onAction={async () => {
+                        await JenkinsJobService.removeFromFavorites(job);
+                        revalidateFavorites();
+                      }}
+                      shortcut={{ modifiers: ["cmd", "shift"], key: "f" }}
+                    />
+                    <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
+                  </ActionPanel>
+                }
+              />
+            );
+          })}
+        </List.Section>
+      )}
+      <List.Section title={favoriteJobs.length ? "All Jobs" : "Total"} subtitle={`${nonFavoriteJobs.length}`}>
+        {nonFavoriteJobs.map(function (job: JobResult) {
           return (
             <List.Item
               title={job.name}
@@ -69,6 +109,15 @@ export default function Command() {
                     title={"Show Jobs"}
                     target={<JobsList job={job} sortByUsage parentSearchTerm={searchText} />}
                     onPush={() => recordUsage(job.name)}
+                  />
+                  <Action
+                    title={"Add To Favorites"}
+                    icon={Icon.Star}
+                    onAction={async () => {
+                      await JenkinsJobService.addToFavorites(job);
+                      revalidateFavorites();
+                    }}
+                    shortcut={{ modifiers: ["cmd", "shift"], key: "f" }}
                   />
                   <Action.OpenInBrowser title={"Open In Browser"} url={job.url} />
                 </ActionPanel>

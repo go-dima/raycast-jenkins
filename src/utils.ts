@@ -1,4 +1,5 @@
 import { Toast, showToast } from "@raycast/api";
+import { HttpStatusCode } from "axios";
 import { fetchJsonData } from "./http";
 import { ExtraInfo, JobResult } from "./job.types";
 
@@ -49,8 +50,12 @@ export async function getExtraInfo(
             }
           );
         } catch (err) {
-          console.error("fetchJsonData", err);
-          return undefined;
+          const { response } = err as { response?: { status: number } };
+          if (response?.status === HttpStatusCode.NotFound) {
+            // Ignore, since the job was deleted
+            return undefined;
+          }
+          console.error("fetchJsonData", job.url, err);
         }
       })
     )
