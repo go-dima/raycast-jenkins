@@ -1,5 +1,6 @@
 import { LocalStorage } from "@raycast/api";
 import { fetchJsonData } from "./http";
+import { FetchResponse } from "./http.types";
 import { ExtraInfo } from "./job.types";
 
 export interface TrackedJob {
@@ -55,8 +56,7 @@ export class JobTracker {
 
     for (const job of jobs) {
       try {
-        const { data }: { data: ExtraInfo } = await fetchJsonData(job.url);
-        // console.log("Fetched job data:", data);
+        const { data } = await fetchJsonData<FetchResponse>(job.url);
         if (data) {
           const updatedJob: TrackedJob = {
             ...job,

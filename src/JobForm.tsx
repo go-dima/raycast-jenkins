@@ -21,8 +21,8 @@ export function JobForm({ job, jobInfo }: FormProps) {
         <ActionPanel>
           <Action.SubmitForm
             title="Build"
-            onSubmit={(values): void => {
-              buildWithParameters(job.url, values, job.name, jobInfo?.displayName ?? job.name);
+            onSubmit={async (values): Promise<void> => {
+              await buildWithParameters(job.url, values, job.name, jobInfo?.displayName ?? job.name);
               popToRoot();
             }}
           />

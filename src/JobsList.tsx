@@ -7,6 +7,7 @@ import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 import { useCachedState, useCachedPromise } from "@raycast/utils";
 import { JobForm } from "./JobForm";
 import { JenkinsJobService } from "./favorites";
+import { FetchResponse } from "./http.types";
 
 const buildableMark = " 🔨";
 const favoriteMark = " ⭐";
@@ -63,7 +64,7 @@ export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobs
       try {
         const {
           data: { fullName, jobs, builds },
-        }: { data: ExtraInfo } = await fetchJsonData(parentJob.url);
+        } = await fetchJsonData<FetchResponse>(parentJob.url);
         setViewName(fullName);
         setJobs(jobs ?? builds?.map((build) => ({ name: build.number.toString(), url: build.url })));
       } catch (err) {

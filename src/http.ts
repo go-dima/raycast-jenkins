@@ -1,9 +1,9 @@
 import { getPreferenceValues, showToast, Toast } from "@raycast/api";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import https from "https";
 import { encode } from "js-base64";
+import { FetchLocationResponse, FetchResponse } from "./http.types";
 import { JobTracker } from "./job-tracker";
-import { ExtraInfo } from "./job.types";
 
 interface Preferences {
   jenkinsUrl: string;
@@ -27,20 +27,14 @@ const httpsAgent = new https.Agent({
 
 axios.defaults.httpsAgent = httpsAgent;
 
-export interface fetchResponse {
-  status: number;
-  statusText: string;
-  data: ExtraInfo;
-}
-
-export async function fetchJsonData(url: string): Promise<fetchResponse> {
+export async function fetchJsonData<T>(url: string): Promise<T> {
   return await axios.request({
     ...authConfig,
     url: `${url}api/json`,
   });
 }
 
-export async function fetchRootData(): Promise<fetchResponse> {
+export async function fetchRootData(): Promise<FetchResponse> {
   return await fetchJsonData(jenkinsUrl);
 }
 
@@ -51,27 +45,39 @@ export async function buildWithParameters(
   displayName: string
 ) {
   try {
-    postJsonData(`${url}buildWithParameters`, params);
-    await JobTracker.addTrackedJob(jobName, url, displayName);
-
-    showToast({ style: Toast.Style.Success, title: "Build started" });
+    const response = await postJsonData(`${url}buildWithParameters`, params);
+    const triggeredUrl = await fetchTriggeredJob(response);
+    await JobTracker.addTrackedJob(jobName, triggeredUrl, displayName);
+    showToast({ style: Toast.Style.Success, title: `${displayName} Build started` });
   } catch (error) {
     console.error(error);
     showToast({ style: Toast.Style.Failure, title: "Error", message: "Failed to start build" });
   }
 }
 
-export function postJsonData(url: string, params: Record<string, string>) {
-  // axios.request({
-  //   ...authConfig,
-  //   url,
-  //   method: "POST",
-  //   params,
-  // });
-  // nokodemcode
-  return axios.post(url, params, {
-    headers: {
-      ...authConfig.headers,
-    },
+export async function postJsonData(url: string, params: Record<string, string>) {
+  // Convert params to URLSearchParams for form encoding
+  const formData = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    formData.append(key, value);
   });
+  try {
+    return axios.request({
+      ...authConfig,
+      url,
+      method: "POST",
+      params,
+    });
+  } catch (error) {
+    console.error("Error in postJsonData:", error);
+    throw error;
+  }
+}
+
+async function fetchTriggeredJob(response: AxiosResponse): Promise<string> {
+  const { location } = response.headers;
+  const { data } = await fetchJsonData<FetchLocationResponse>(location);
+  const { url: triggeredUrl } = data.executable;
+
+  return triggeredUrl;
 }
