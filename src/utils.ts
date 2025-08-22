@@ -1,98 +1,44 @@
-import { showToast, Toast } from "@raycast/api";
-import { HttpStatusCode } from "axios";
-import { fetchJsonData } from "./http";
-import { FetchResponse } from "./http.types";
-import { ExtraInfo, JobResult } from "./job.types";
+/**
+ * Date and time utility functions
+ */
 
-export function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<string, ExtraInfo>): JobResult[] {
-  return jobs.filter((item) => {
-    const matchingJobs = extraInfo[item.name]?.jobs
-      ?.filter((job) => includesText(job.name, filterText))
-      .map((job) => job.name);
-    const matchingBuilds = extraInfo[item.name]?.builds
-      ?.filter((build) => includesText(build.url, filterText))
-      .map((build) => `#${build.number}`);
+/**
+ * Formats a duration from a start timestamp to a human-readable string
+ * @param startedAt - The timestamp when the job started (in milliseconds)
+ * @returns A formatted duration string (e.g., "5m", "2h 30m", "45s")
+ */
+export function formatDuration(startedAt: number): string {
+  const duration = Math.floor((Date.now() - startedAt) / 1000);
 
-    const hasMatch =
-      !filterText ||
-      includesText(item.name, filterText) ||
-      includesText(extraInfo[item.name]?.displayName, filterText) ||
-      matchingJobs?.length ||
-      matchingBuilds?.length;
-
-    if (extraInfo[item.name]) {
-      extraInfo[item.name].filterMatches = filterText ? [...(matchingJobs ?? []), ...(matchingBuilds ?? [])] : [];
-    }
-
-    return hasMatch;
-  });
+  if (duration < 60) return `${duration}s`;
+  if (duration < 3600) return `${Math.floor(duration / 60)}m`;
+  return `${Math.floor(duration / 3600)}h ${Math.floor((duration % 3600) / 60)}m`;
 }
 
-export async function getExtraInfo(
-  jobs: JobResult[],
-  loadingSetter: (arg0: boolean) => void,
-  infoSetter: (arg0: Record<string, ExtraInfo>) => void
-) {
-  loadingSetter(true);
-  const jobsWithExtraInfo = (
-    await Promise.all(
-      jobs.map(async (job) => {
-        try {
-          const { data } = await fetchJsonData<FetchResponse>(job.url);
-
-          if (data) {
-            // if the item is job, we want to use the color from the parent
-            data.color = data.color ?? job.color;
-          }
-          return (
-            data && {
-              name: job.name,
-              extra: data as ExtraInfo,
-            }
-          );
-        } catch (err) {
-          const { response } = err as { response?: { status: number } };
-          if (response?.status === HttpStatusCode.NotFound) {
-            // Ignore, since the job was deleted
-            return undefined;
-          }
-          console.error("fetchJsonData", job.url, err);
-        }
-      })
-    )
-  ).reduce((acc: Record<string, ExtraInfo>, ele) => {
-    if (ele) {
-      acc[ele.name] = ele.extra;
-    }
-    return acc;
-  }, {});
-  infoSetter(jobsWithExtraInfo);
-  loadingSetter(false);
+/**
+ * Formats a timestamp to a human-readable date string
+ * @param timestamp - The timestamp to format (in milliseconds)
+ * @returns A formatted date string
+ */
+export function formatTimestamp(timestamp: number): string {
+  return new Date(timestamp).toLocaleString();
 }
 
-export function sortByTerm(toSort: JobResult[], term = ""): JobResult[] {
-  // Split into 'main' job and rest of jobs
-  const main = toSort.find((job) => job.name === "main");
-  const rest = toSort.filter((job) => job.name !== "main");
+/**
+ * Calculates the time ago from a timestamp
+ * @param timestamp - The timestamp to calculate from (in milliseconds)
+ * @returns A string representing time elapsed (e.g., "2 minutes ago", "1 hour ago")
+ */
+export function getTimeAgo(timestamp: number): string {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
 
-  if (!term) {
-    return main ? [main, ...rest] : rest;
-  }
-
-  // If term exists, sort the rest based on matching
-  const matching = rest.filter((job) => includesText(job.name, term));
-  const nonMatching = rest.filter((job) => !includesText(job.name, term));
-
-  return main ? [...matching, main, ...nonMatching] : [...matching, ...nonMatching];
-}
-
-function includesText(term: string, toSearch: string): boolean {
-  if (!term) {
-    return false;
-  }
-  return term.toString().toLowerCase().includes(toSearch.toString().toLowerCase());
-}
-
-export function toastFailure(msg: unknown) {
-  showToast({ style: Toast.Style.Failure, title: "Fetch Failed", message: `${msg}` });
+  if (days > 0) return `${days} day${days > 1 ? "s" : ""} ago`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  if (minutes > 0) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+  return `${seconds} second${seconds > 1 ? "s" : ""} ago`;
 }

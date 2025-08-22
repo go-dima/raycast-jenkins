@@ -1,16 +1,16 @@
 import { Action, ActionPanel, Color, Icon, List } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { ExtraInfo, JobClassOptions, JobResult } from "./job.types";
-import { fetchJsonData } from "./http";
-import { filterJobs, getExtraInfo, sortByTerm } from "./utils";
+import { fetchJsonData } from "./http/http";
+import { filterJobs, getExtraInfo, sortByTerm } from "./jenkins.helpers";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 import { useCachedState, useCachedPromise } from "@raycast/utils";
 import { JobForm } from "./JobForm";
-import { JenkinsJobService } from "./favorites";
-import { FetchResponse } from "./http.types";
+import { JenkinsJobService } from "./services/favorites";
+import { FetchResponse } from "./http/http.types";
 
 const buildableMark = " 🔨";
-const favoriteMark = " ⭐";
+export const favoriteMark = " ⭐";
 
 type ItemAccessory = {
   text: {

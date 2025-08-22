@@ -1,4 +1,4 @@
-import { ExtraInfo } from "./job.types";
+import { ExtraInfo } from "../job.types";
 
 interface BaseResponse {
   status: number;

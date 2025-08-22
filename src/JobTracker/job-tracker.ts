@@ -1,19 +1,8 @@
 import { LocalStorage } from "@raycast/api";
-import { fetchJsonData } from "./http";
-import { FetchResponse } from "./http.types";
-import { ExtraInfo } from "./job.types";
-
-export interface TrackedJob {
-  name: string;
-  url: string;
-  displayName: string;
-  startedAt: number;
-  lastBuildNumber?: number;
-  status: JobStatus;
-  building: boolean;
-}
-
-export type JobStatus = "building" | "success" | "failure" | "unstable" | "aborted" | "unknown";
+import { fetchJsonData } from "../http/http";
+import { FetchResponse } from "../http/http.types";
+import { ExtraInfo } from "../job.types";
+import { GroupedJobs, JobStatus, JobStatusSummary, TrackedJob } from "./job-tracker.types";
 
 export class JobTracker {
   private static storageKey = "jenkins-tracked-jobs";
@@ -28,6 +17,12 @@ export class JobTracker {
 
   private static async saveTrackedJobs(jobs: TrackedJob[]) {
     await LocalStorage.setItem(JobTracker.storageKey, JSON.stringify(jobs));
+  }
+
+  static async removeTrackedJob(url: string) {
+    const jobs = await JobTracker.getTrackedJobs();
+    const filteredJobs = jobs.filter((job) => job.url !== url);
+    await JobTracker.saveTrackedJobs(filteredJobs);
   }
 
   static async addTrackedJob(name: string, url: string, displayName: string) {
@@ -47,6 +42,7 @@ export class JobTracker {
     };
 
     filteredJobs.push(newJob);
+    console.info("Added", newJob.url);
     await JobTracker.saveTrackedJobs(filteredJobs);
   }
 
@@ -135,37 +131,78 @@ export class JobTracker {
     await LocalStorage.removeItem(JobTracker.storageKey);
   }
 
-  static getStatusIcon(status: JobStatus): string {
-    switch (status) {
-      case "building":
-        return "🔄";
-      case "success":
-        return "✅";
-      case "failure":
-        return "❌";
-      case "unstable":
-        return "⚠️";
-      case "aborted":
-        return "⏹️";
-      default:
-        return "❓";
-    }
+  /**
+   * Calculate summary statistics from an array of tracked jobs
+   */
+  static calculateStatusSummary(jobs: TrackedJob[]): JobStatusSummary {
+    return jobs.reduce(
+      (summary, job) => {
+        summary.total++;
+        summary[job.status]++;
+        return summary;
+      },
+      {
+        total: 0,
+        building: 0,
+        success: 0,
+        failure: 0,
+        unstable: 0,
+        aborted: 0,
+        unknown: 0,
+      } as JobStatusSummary
+    );
   }
 
-  static getStatusColor(status: JobStatus): string {
-    switch (status) {
-      case "building":
-        return "#FFA500"; // Orange
-      case "success":
-        return "#28A745"; // Green
-      case "failure":
-        return "#DC3545"; // Red
-      case "unstable":
-        return "#FFC107"; // Yellow
-      case "aborted":
-        return "#6C757D"; // Gray
-      default:
-        return "#007AFF"; // Blue
-    }
+  /**
+   * Group jobs by their status
+   */
+  static groupJobsByStatus(jobs: TrackedJob[]): GroupedJobs {
+    const groups: GroupedJobs = {
+      building: [],
+      failure: [],
+      unstable: [],
+      success: [],
+      aborted: [],
+      unknown: [],
+    };
+
+    jobs.forEach((job) => {
+      groups[job.status].push(job);
+    });
+
+    return groups;
+  }
+
+  /**
+   * Generate menu bar title based on job status summary
+   */
+  static getMenuBarTitle(summary: JobStatusSummary): string {
+    if (summary.total === 0) return "👷🏽‍♂️";
+
+    // Priority: building > failure > unstable > success
+    if (summary.building > 0) return `🔄 ${summary.building}`;
+    if (summary.failure > 0) return `❌ ${summary.failure}`;
+    if (summary.unstable > 0) return `⚠️ ${summary.unstable}`;
+    if (summary.success > 0) return `✅ ${summary.success}`;
+    if (summary.aborted > 0) return `⏹️ ${summary.aborted}`;
+
+    return `❓ ${summary.unknown}`;
+  }
+
+  /**
+   * Generate tooltip text based on job status summary
+   */
+  static getTooltip(summary: JobStatusSummary): string {
+    if (summary.total === 0) return "No Jenkins jobs being tracked";
+
+    const parts: string[] = [];
+    if (summary.building > 0) parts.push(`Building: ${summary.building}`);
+    if (summary.failure > 0) parts.push(`Failed: ${summary.failure}`);
+    if (summary.unstable > 0) parts.push(`Unstable: ${summary.unstable}`);
+    if (summary.success > 0) parts.push(`Success: ${summary.success}`);
+    if (summary.aborted > 0) parts.push(`Aborted: ${summary.aborted}`);
+    if (summary.unknown > 0) parts.push(`Unknown: ${summary.unknown}`);
+
+    return `Jenkins Jobs - ${parts.join(", ")}`;
   }
 }

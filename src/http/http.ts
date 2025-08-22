@@ -2,8 +2,8 @@ import { getPreferenceValues, showToast, Toast } from "@raycast/api";
 import axios, { AxiosResponse } from "axios";
 import https from "https";
 import { encode } from "js-base64";
+import { JobTracker } from "../JobTracker/job-tracker";
 import { FetchLocationResponse, FetchResponse } from "./http.types";
-import { JobTracker } from "./job-tracker";
 
 interface Preferences {
   jenkinsUrl: string;

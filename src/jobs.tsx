@@ -2,12 +2,12 @@ import { HttpStatusCode } from "axios";
 import { Action, ActionPanel, Icon, List } from "@raycast/api";
 import { useCallback, useEffect, useState } from "react";
 import { ExtraInfo, JobResult } from "./job.types";
-import { fetchRootData } from "./http";
-import { JobsList } from "./JobsList";
-import { filterJobs, getExtraInfo, toastFailure } from "./utils";
+import { fetchRootData } from "./http/http";
+import { favoriteMark, JobsList } from "./JobsList";
+import { filterJobs, getExtraInfo, toastFailure } from "./jenkins.helpers";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 import { useCachedState, useCachedPromise } from "@raycast/utils";
-import { JenkinsJobService } from "./favorites";
+import { JenkinsJobService } from "./services/favorites";
 
 export default function Command() {
   const [searchText, setSearchText] = useState<string>("");
@@ -67,7 +67,7 @@ export default function Command() {
           {favoriteJobs.map(function (job: JobResult) {
             return (
               <List.Item
-                title={`${job.name} ⭐`}
+                title={`${job.name}${favoriteMark}`}
                 id={job.name}
                 key={job.name}
                 subtitle={extraInfo[job.name]?.filterMatches?.join(", ")}
