@@ -1,7 +1,7 @@
-import { Toast, showToast } from "@raycast/api";
 import { HttpStatusCode } from "axios";
-import { fetchJsonData } from "./http";
-import { ExtraInfo, JobResult } from "./job.types";
+import { fetchJsonData } from "../services/http";
+import type { FetchResponse } from "../services/http/http.types";
+import type { ExtraInfo, JobResult } from "./job.types";
 
 export function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<string, ExtraInfo>): JobResult[] {
   return jobs.filter((item) => {
@@ -37,7 +37,7 @@ export async function getExtraInfo(
     await Promise.all(
       jobs.map(async (job) => {
         try {
-          const { data }: { data: ExtraInfo } = await fetchJsonData(job.url);
+          const { data } = await fetchJsonData<FetchResponse>(job.url);
 
           if (data) {
             // if the item is job, we want to use the color from the parent
@@ -90,8 +90,4 @@ function includesText(term: string, toSearch: string): boolean {
     return false;
   }
   return term.toString().toLowerCase().includes(toSearch.toString().toLowerCase());
-}
-
-export function toastFailure(msg: unknown) {
-  showToast({ style: Toast.Style.Failure, title: "Fetch Failed", message: `${msg}` });
 }
