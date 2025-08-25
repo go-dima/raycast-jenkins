@@ -1,4 +1,4 @@
-import { PropertyType } from "./property.types";
+import type { PropertyType } from "./property.types";
 
 export const USAGE_KEY = "scores-";
 

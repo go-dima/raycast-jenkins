@@ -1,8 +1,8 @@
 import { LocalStorage } from "@raycast/api";
-import { fetchJsonData } from "../http/http";
-import { FetchResponse } from "../http/http.types";
 import { ExtraInfo } from "../job.types";
-import { GroupedJobs, JobStatus, JobStatusSummary, TrackedJob } from "./job-tracker.types";
+import { fetchJsonData } from "../services/http";
+import type { FetchResponse } from "../services/http/http.types";
+import type { GroupedJobs, JobStatus, JobStatusSummary, TrackedJob } from "./job-tracker.types";
 
 export class JobTracker {
   private static storageKey = "jenkins-tracked-jobs";

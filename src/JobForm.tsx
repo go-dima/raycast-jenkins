@@ -2,7 +2,7 @@ import { Action, ActionPanel, Form, popToRoot } from "@raycast/api";
 import { ReactElement } from "react";
 import { ExtraInfo, JobResult } from "./job.types";
 import { ParameterDefinition, ParameterTypeValues, ParametersDefinitionProperty } from "./property.types";
-import { buildWithParameters } from "./http/http";
+import { buildWithParameters } from "./services/http";
 
 type FormProps = {
   job: JobResult;

@@ -1,13 +1,13 @@
 import { HttpStatusCode } from "axios";
 import { Action, ActionPanel, Icon, List } from "@raycast/api";
 import { useCallback, useEffect, useState } from "react";
-import { ExtraInfo, JobResult } from "./job.types";
-import { fetchRootData } from "./http/http";
-import { favoriteMark, JobsList } from "./JobsList";
+import type { ExtraInfo, JobResult } from "./job.types";
+import { favoriteMark, JobsList } from "./JobsList/JobsList";
 import { filterJobs, getExtraInfo, toastFailure } from "./jenkins.helpers";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 import { useCachedState, useCachedPromise } from "@raycast/utils";
 import { JenkinsJobService } from "./services/favorites";
+import { fetchRootData } from "./services/http";
 
 export default function Command() {
   const [searchText, setSearchText] = useState<string>("");

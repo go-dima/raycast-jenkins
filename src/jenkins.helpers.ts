@@ -1,8 +1,8 @@
 import { showToast, Toast } from "@raycast/api";
 import { HttpStatusCode } from "axios";
-import { fetchJsonData } from "./http/http";
-import { FetchResponse } from "./http/http.types";
-import { ExtraInfo, JobResult } from "./job.types";
+import type { ExtraInfo, JobResult } from "./job.types";
+import { fetchJsonData } from "./services/http";
+import type { FetchResponse } from "./services/http/http.types";
 
 export function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<string, ExtraInfo>): JobResult[] {
   return jobs.filter((item) => {

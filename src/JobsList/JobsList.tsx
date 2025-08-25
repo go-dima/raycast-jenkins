@@ -1,57 +1,25 @@
-import { Action, ActionPanel, Color, Icon, List, popToRoot } from "@raycast/api";
+import { Action, ActionPanel, Icon, List, popToRoot } from "@raycast/api";
 import { useEffect, useState } from "react";
-import { ExtraInfo, JobClassOptions, JobResult } from "./job.types";
-import { fetchJsonData } from "./http/http";
-import { filterJobs, getExtraInfo, sortByTerm } from "./jenkins.helpers";
-import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
+import type { ExtraInfo, JobResult } from "../job.types";
+import { JobClassOptions } from "../job.types";
+import { filterJobs, getExtraInfo, sortByTerm } from "../jenkins.helpers";
+import { useUsageBasedSort } from "../hooks/useUsageBasedSort";
 import { useCachedState, useCachedPromise } from "@raycast/utils";
-import { JobForm } from "./JobForm";
-import { JenkinsJobService } from "./services/favorites";
-import { FetchResponse } from "./http/http.types";
-import { JobTracker } from "./JobTracker/job-tracker";
+import { JobForm } from "../JobForm";
+import { JenkinsJobService } from "../services/favorites";
+import { JobTracker } from "../JobTracker/job-tracker";
+import type { JobItemProps, JobsListProps } from "./JobsList.types";
+import { formatAccessory } from "./JobsList.heplers";
+import { fetchJsonData } from "../services/http";
+import type { FetchResponse } from "../services/http/http.types";
 
 const buildableMark = " 🔨";
 export const favoriteMark = " ⭐";
 
-type ItemAccessory = {
-  text: {
-    value: string;
-    color: Color;
-  };
-};
-
-function formatAccessory(color: string): ItemAccessory[] {
-  // colors
-  const buildingOrange = { text: { value: "building", color: Color.Orange } };
-  const successGreen = { text: { value: "success", color: Color.Green } };
-  const failureRed = { text: { value: "failure", color: Color.Red } };
-  const abortedGray = { text: { value: "aborted", color: Color.SecondaryText } };
-
-  // status to color
-  const textToColor: Record<string, ItemAccessory> = {
-    building: buildingOrange,
-    blue_anime: buildingOrange,
-    blue: successGreen,
-    success: successGreen,
-    red: failureRed,
-    failure: failureRed,
-    aborted: abortedGray,
-  };
-
-  const accessory = textToColor[color?.toLowerCase()];
-  return accessory ? [accessory] : [];
-}
-
-type jobsListProps = {
-  job: JobResult;
-  sortByUsage?: boolean;
-  parentSearchTerm?: string;
-};
-
 // Dima: need to see what fails: fetch of extra info
 // I see that the cahce causes fetching of old data that was already deleted
 // That's why a 404 is returned - the job was deleted
-export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobsListProps): JSX.Element => {
+export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: JobsListProps): JSX.Element => {
   const [jobs, setJobs] = useCachedState<JobResult[]>(`${parentJob.name}_jobs`, []);
   const [extraInfo, setExtraInfo] = useState<Record<string, ExtraInfo>>({});
   const [viewName, setViewName] = useCachedState<string>(`${parentJob.name}_viewname`, "");
@@ -129,15 +97,6 @@ export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobs
   );
 };
 
-type jobItemProps = {
-  job: JobResult;
-  jobInfo: ExtraInfo;
-  onUseAction?: (id: string | number) => void;
-  parentSearchTerm?: string;
-  isFavorite: boolean;
-  revalidateFavorites: () => void;
-};
-
 export const JobListItem = ({
   job,
   jobInfo,
@@ -145,7 +104,7 @@ export const JobListItem = ({
   parentSearchTerm,
   isFavorite,
   revalidateFavorites,
-}: jobItemProps): JSX.Element => {
+}: JobItemProps): JSX.Element => {
   const hasJobs = jobInfo?.jobs || jobInfo?.builds;
   const isBuildable = (jobInfo?._class as string) == JobClassOptions.WorkflowJob;
   const isBuilding = jobInfo?.building || jobInfo?.color?.toLowerCase().includes("anime");

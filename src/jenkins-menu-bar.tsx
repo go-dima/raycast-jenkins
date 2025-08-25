@@ -2,7 +2,7 @@ import { MenuBarExtra, open, getPreferenceValues, popToRoot } from "@raycast/api
 import { useCachedPromise } from "@raycast/utils";
 import { JobTracker } from "./JobTracker/job-tracker";
 import { formatDuration } from "./utils";
-import { JobStatus, TrackedJob } from "./JobTracker/job-tracker.types";
+import type { JobStatus, TrackedJob } from "./JobTracker/job-tracker.types";
 import { getStatusText } from "./JobTracker";
 
 function renderJobSection(title: string, jobs: TrackedJob[], status: JobStatus) {
