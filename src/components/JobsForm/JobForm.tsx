@@ -1,5 +1,5 @@
 import { Action, ActionPanel, Form, popToRoot } from "@raycast/api";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 import type { ParameterDefinition, ParametersDefinitionProperty } from "../../common/property.types";
 import { ParameterTypeValues } from "../../common/property.types";
 import { buildWithParameters } from "../../services/http";

@@ -1,5 +1,6 @@
 import { getPreferenceValues, showToast, Toast } from "@raycast/api";
-import axios, { AxiosResponse } from "axios";
+import type { AxiosResponse } from "axios";
+import axios from "axios";
 import https from "https";
 import { encode } from "js-base64";
 import { JobTracker } from "../JobTracker";

@@ -1,5 +1,6 @@
 import { useLocalStorage } from "./useLocalStorage";
-import { Usages, getCalculatedScore } from "./utils";
+import type { Usages } from "./utils";
+import { getCalculatedScore } from "./utils";
 
 export const USAGE_KEY = "scores-";
 
