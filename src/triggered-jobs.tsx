@@ -1,9 +1,9 @@
-import { List, ActionPanel, Action, Icon, Color, getPreferenceValues } from "@raycast/api";
+import { List, ActionPanel, Action, Icon, getPreferenceValues } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
-import { JobTracker } from "./JobTracker/job-tracker";
-import { formatDuration } from "./utils";
-import { JobStatus, TrackedJob } from "./JobTracker/job-tracker.types";
-import { getStatusIcon, getStatusText } from "./JobTracker";
+import { JobTracker } from "./services/JobTracker/job-tracker";
+import { formatDuration } from "./common/utils";
+import type { JobStatus, TrackedJob } from "./services/JobTracker/job-tracker.types";
+import { getStatusColor, getStatusIcon, getStatusText } from "./common/job-status.helpers";
 
 function renderJobSection(status: JobStatus, jobs: TrackedJob[], onRemove: () => void) {
   if (jobs.length === 0) return null;
@@ -35,23 +35,6 @@ function renderJobSection(status: JobStatus, jobs: TrackedJob[], onRemove: () =>
       }
     />
   ));
-}
-
-function getStatusColor(status: JobStatus): Color {
-  switch (status) {
-    case "building":
-      return Color.Orange;
-    case "success":
-      return Color.Green;
-    case "failure":
-      return Color.Red;
-    case "unstable":
-      return Color.Yellow;
-    case "aborted":
-      return Color.SecondaryText;
-    default:
-      return Color.Blue;
-  }
 }
 
 export default function Command() {

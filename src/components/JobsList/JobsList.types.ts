@@ -1,5 +1,5 @@
 import { Color } from "@raycast/api";
-import type { ExtraInfo, JobResult } from "../job.types";
+import type { ExtraInfo, JobResult } from "../../common/job.types";
 
 export type ItemAccessory = {
   text: {

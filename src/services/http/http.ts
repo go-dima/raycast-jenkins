@@ -2,7 +2,7 @@ import { getPreferenceValues, showToast, Toast } from "@raycast/api";
 import axios, { AxiosResponse } from "axios";
 import https from "https";
 import { encode } from "js-base64";
-import { JobTracker } from "../../JobTracker";
+import { JobTracker } from "../JobTracker";
 import type { FetchLocationResponse, FetchResponse } from "./http.types";
 
 interface Preferences {

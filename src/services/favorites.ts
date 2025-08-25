@@ -1,5 +1,5 @@
 import { LocalStorage } from "@raycast/api";
-import { JobResult } from "../job.types";
+import type { JobResult } from "../common/job.types";
 
 export class JenkinsJobService {
   private static favoritesStorageKey = "jenkins-jobs-favorites";

@@ -1,8 +1,7 @@
-import { showToast, Toast } from "@raycast/api";
 import { HttpStatusCode } from "axios";
+import { fetchJsonData } from "../services/http";
+import type { FetchResponse } from "../services/http/http.types";
 import type { ExtraInfo, JobResult } from "./job.types";
-import { fetchJsonData } from "./services/http";
-import type { FetchResponse } from "./services/http/http.types";
 
 export function filterJobs(jobs: JobResult[], filterText: string, extraInfo: Record<string, ExtraInfo>): JobResult[] {
   return jobs.filter((item) => {
@@ -91,8 +90,4 @@ function includesText(term: string, toSearch: string): boolean {
     return false;
   }
   return term.toString().toLowerCase().includes(toSearch.toString().toLowerCase());
-}
-
-export function toastFailure(msg: unknown) {
-  showToast({ style: Toast.Style.Failure, title: "Fetch Failed", message: `${msg}` });
 }

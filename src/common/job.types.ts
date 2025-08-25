@@ -1,7 +1,5 @@
 import type { PropertyType } from "./property.types";
 
-export const USAGE_KEY = "scores-";
-
 export interface JobResult {
   name: string;
   url: string;

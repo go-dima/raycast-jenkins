@@ -1,7 +1,6 @@
 import { LocalStorage } from "@raycast/api";
-import { ExtraInfo } from "../job.types";
-import { fetchJsonData } from "../services/http";
-import type { FetchResponse } from "../services/http/http.types";
+import type { ExtraInfo } from "../../common/job.types";
+import { fetchJsonData, type FetchResponse } from "../http";
 import type { GroupedJobs, JobStatus, JobStatusSummary, TrackedJob } from "./job-tracker.types";
 
 export class JobTracker {

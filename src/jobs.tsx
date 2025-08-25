@@ -1,13 +1,17 @@
 import { HttpStatusCode } from "axios";
-import { Action, ActionPanel, Icon, List } from "@raycast/api";
+import { Action, ActionPanel, Icon, List, showToast, Toast } from "@raycast/api";
 import { useCallback, useEffect, useState } from "react";
-import type { ExtraInfo, JobResult } from "./job.types";
-import { favoriteMark, JobsList } from "./JobsList/JobsList";
-import { filterJobs, getExtraInfo, toastFailure } from "./jenkins.helpers";
+import type { ExtraInfo, JobResult } from "./common/job.types";
+import { filterJobs, getExtraInfo } from "./common/jenkins.helpers";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
 import { useCachedState, useCachedPromise } from "@raycast/utils";
 import { JenkinsJobService } from "./services/favorites";
 import { fetchRootData } from "./services/http";
+import { favoriteMark, JobsList } from "./components/JobsList";
+
+export function toastFailure(msg: unknown) {
+  showToast({ style: Toast.Style.Failure, title: "Fetch Failed", message: `${msg}` });
+}
 
 export default function Command() {
   const [searchText, setSearchText] = useState<string>("");

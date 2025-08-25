@@ -1,5 +1,5 @@
-import { Icon } from "@raycast/api";
-import { JobStatus } from "./job-tracker.types";
+import { Color, Icon } from "@raycast/api";
+import type { JobStatus } from "../services/JobTracker/job-tracker.types";
 
 export function getStatusIcon(status: JobStatus): Icon {
   switch (status) {
@@ -32,5 +32,22 @@ export function getStatusText(status: JobStatus): string {
       return "🚫";
     default:
       return "❓";
+  }
+}
+
+export function getStatusColor(status: JobStatus): Color {
+  switch (status) {
+    case "building":
+      return Color.Orange;
+    case "success":
+      return Color.Green;
+    case "failure":
+      return Color.Red;
+    case "unstable":
+      return Color.Yellow;
+    case "aborted":
+      return Color.SecondaryText;
+    default:
+      return Color.Blue;
   }
 }

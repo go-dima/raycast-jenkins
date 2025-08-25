@@ -1,9 +1,9 @@
 import { MenuBarExtra, open, getPreferenceValues, popToRoot } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
-import { JobTracker } from "./JobTracker/job-tracker";
-import { formatDuration } from "./utils";
-import type { JobStatus, TrackedJob } from "./JobTracker/job-tracker.types";
-import { getStatusText } from "./JobTracker";
+import { JobTracker } from "./services/JobTracker";
+import { formatDuration } from "./common/utils";
+import type { JobStatus, TrackedJob } from "./services/JobTracker/job-tracker.types";
+import { getStatusText } from "./common/job-status.helpers";
 
 function renderJobSection(title: string, jobs: TrackedJob[], status: JobStatus) {
   if (jobs.length === 0) return null;

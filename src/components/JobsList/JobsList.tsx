@@ -1,20 +1,16 @@
 import { Action, ActionPanel, Icon, List, popToRoot } from "@raycast/api";
 import { useEffect, useState } from "react";
-import type { ExtraInfo, JobResult } from "../job.types";
-import { JobClassOptions } from "../job.types";
-import { filterJobs, getExtraInfo, sortByTerm } from "../jenkins.helpers";
-import { useUsageBasedSort } from "../hooks/useUsageBasedSort";
+import { JobClassOptions, type ExtraInfo, type JobResult } from "../../common/job.types";
 import { useCachedState, useCachedPromise } from "@raycast/utils";
-import { JobForm } from "../JobForm";
-import { JenkinsJobService } from "../services/favorites";
-import { JobTracker } from "../JobTracker/job-tracker";
 import type { JobItemProps, JobsListProps } from "./JobsList.types";
 import { formatAccessory } from "./JobsList.heplers";
-import { fetchJsonData } from "../services/http";
-import type { FetchResponse } from "../services/http/http.types";
-
-const buildableMark = " 🔨";
-export const favoriteMark = " ⭐";
+import { fetchJsonData, type FetchResponse } from "../../services/http";
+import { JenkinsJobService } from "../../services/favorites";
+import { JobTracker } from "../../services/JobTracker";
+import { useUsageBasedSort } from "../../hooks/useUsageBasedSort";
+import { getExtraInfo, sortByTerm, filterJobs } from "../../common/jenkins.helpers";
+import { JobForm } from "../JobsForm/JobForm";
+import { BuildableMark, FavoriteMark } from "../../common/consts";
 
 // Dima: need to see what fails: fetch of extra info
 // I see that the cahce causes fetching of old data that was already deleted
@@ -111,8 +107,8 @@ export const JobListItem = ({
 
   return (
     <List.Item
-      title={`${jobInfo?.displayName ?? job.name.toString()}${isBuildable ? buildableMark : ""}${
-        isFavorite ? favoriteMark : ""
+      title={`${jobInfo?.displayName ?? job.name.toString()}${isBuildable ? BuildableMark : ""}${
+        isFavorite ? FavoriteMark : ""
       }`}
       subtitle={jobInfo?.filterMatches?.join(", ")}
       accessories={formatAccessory(jobInfo?.color ?? (jobInfo?.building ? "building" : jobInfo?.result))}
