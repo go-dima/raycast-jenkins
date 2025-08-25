@@ -1,9 +1,9 @@
 import axios, { HttpStatusCode } from "axios";
 import { Action, ActionPanel, getPreferenceValues, List, showToast, Toast } from "@raycast/api";
 import { useCallback, useState } from "react";
-import { authConfig } from "./http";
 import { useCachedState } from "@raycast/utils";
 import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
+import { authConfig } from "./services/http";
 
 const { jenkinsUrl }: Preferences = getPreferenceValues();
 

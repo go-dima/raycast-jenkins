@@ -1,6 +1,4 @@
-import { PropertyType } from "./property.types";
-
-export const USAGE_KEY = "scores-";
+import type { PropertyType } from "./property.types";
 
 export interface JobResult {
   name: string;

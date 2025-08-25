@@ -1,13 +1,9 @@
 import { Action, ActionPanel, Form, popToRoot } from "@raycast/api";
-import { ReactElement } from "react";
-import { ExtraInfo, JobResult } from "./job.types";
-import { ParameterDefinition, ParameterTypeValues, ParametersDefinitionProperty } from "./property.types";
-import { buildWithParameters } from "./http";
-
-type FormProps = {
-  job: JobResult;
-  jobInfo: ExtraInfo;
-};
+import type { ReactElement } from "react";
+import type { ParameterDefinition, ParametersDefinitionProperty } from "../../common/property.types";
+import { ParameterTypeValues } from "../../common/property.types";
+import { buildWithParameters } from "../../services/http";
+import type { FormProps } from "./JobsForm.types";
 
 export function JobForm({ job, jobInfo }: FormProps) {
   const parameters = jobInfo?.property?.find(
@@ -21,8 +17,8 @@ export function JobForm({ job, jobInfo }: FormProps) {
         <ActionPanel>
           <Action.SubmitForm
             title="Build"
-            onSubmit={(values): void => {
-              buildWithParameters(job.url, values);
+            onSubmit={async (values): Promise<void> => {
+              await buildWithParameters(job.url, values, job.name, jobInfo?.displayName ?? job.name);
               popToRoot();
             }}
           />

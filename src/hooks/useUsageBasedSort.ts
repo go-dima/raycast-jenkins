@@ -1,6 +1,8 @@
-import { USAGE_KEY } from "../job.types";
 import { useLocalStorage } from "./useLocalStorage";
-import { Usages, getCalculatedScore } from "./utils";
+import type { Usages } from "./utils";
+import { getCalculatedScore } from "./utils";
+
+export const USAGE_KEY = "scores-";
 
 export const useUsageBasedSort = <T extends { name: string | number }>(data: T[], localStorageKey: string) => {
   const { data: usages, set: setUsages } = useLocalStorage<Usages>(USAGE_KEY + localStorageKey);

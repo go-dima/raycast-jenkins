@@ -1,55 +1,21 @@
-import { Action, ActionPanel, Color, Icon, List } from "@raycast/api";
+import { Action, ActionPanel, Icon, List, popToRoot } from "@raycast/api";
 import { useEffect, useState } from "react";
-import { ExtraInfo, JobClassOptions, JobResult } from "./job.types";
-import { fetchJsonData } from "./http";
-import { filterJobs, getExtraInfo, sortByTerm } from "./utils";
-import { useUsageBasedSort } from "./hooks/useUsageBasedSort";
+import { JobClassOptions, type ExtraInfo, type JobResult } from "../../common/job.types";
 import { useCachedState, useCachedPromise } from "@raycast/utils";
-import { JobForm } from "./JobForm";
-import { JenkinsJobService } from "./favorites";
-
-const buildableMark = " 🔨";
-const favoriteMark = " ⭐";
-
-type ItemAccessory = {
-  text: {
-    value: string;
-    color: Color;
-  };
-};
-
-function formatAccessory(color: string): ItemAccessory[] {
-  // colors
-  const buildingOrange = { text: { value: "building", color: Color.Orange } };
-  const successGreen = { text: { value: "success", color: Color.Green } };
-  const failureRed = { text: { value: "failure", color: Color.Red } };
-  const abortedGray = { text: { value: "aborted", color: Color.SecondaryText } };
-
-  // status to color
-  const textToColor: Record<string, ItemAccessory> = {
-    building: buildingOrange,
-    blue_anime: buildingOrange,
-    blue: successGreen,
-    success: successGreen,
-    red: failureRed,
-    failure: failureRed,
-    aborted: abortedGray,
-  };
-
-  const accessory = textToColor[color?.toLowerCase()];
-  return accessory ? [accessory] : [];
-}
-
-type jobsListProps = {
-  job: JobResult;
-  sortByUsage?: boolean;
-  parentSearchTerm?: string;
-};
+import type { JobItemProps, JobsListProps } from "./JobsList.types";
+import { formatAccessory } from "./JobsList.heplers";
+import { fetchJsonData, type FetchResponse } from "../../services/http";
+import { JenkinsJobService } from "../../services/favorites";
+import { JobTracker } from "../../services/JobTracker";
+import { useUsageBasedSort } from "../../hooks/useUsageBasedSort";
+import { getExtraInfo, sortByTerm, filterJobs } from "../../common/jenkins.helpers";
+import { JobForm } from "../JobsForm/JobForm";
+import { BuildableMark, FavoriteMark } from "../../common/consts";
 
 // Dima: need to see what fails: fetch of extra info
 // I see that the cahce causes fetching of old data that was already deleted
 // That's why a 404 is returned - the job was deleted
-export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobsListProps): JSX.Element => {
+export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: JobsListProps): JSX.Element => {
   const [jobs, setJobs] = useCachedState<JobResult[]>(`${parentJob.name}_jobs`, []);
   const [extraInfo, setExtraInfo] = useState<Record<string, ExtraInfo>>({});
   const [viewName, setViewName] = useCachedState<string>(`${parentJob.name}_viewname`, "");
@@ -63,7 +29,7 @@ export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobs
       try {
         const {
           data: { fullName, jobs, builds },
-        }: { data: ExtraInfo } = await fetchJsonData(parentJob.url);
+        } = await fetchJsonData<FetchResponse>(parentJob.url);
         setViewName(fullName);
         setJobs(jobs ?? builds?.map((build) => ({ name: build.number.toString(), url: build.url })));
       } catch (err) {
@@ -127,15 +93,6 @@ export const JobsList = ({ job: parentJob, sortByUsage, parentSearchTerm }: jobs
   );
 };
 
-type jobItemProps = {
-  job: JobResult;
-  jobInfo: ExtraInfo;
-  onUseAction?: (id: string | number) => void;
-  parentSearchTerm?: string;
-  isFavorite: boolean;
-  revalidateFavorites: () => void;
-};
-
 export const JobListItem = ({
   job,
   jobInfo,
@@ -143,14 +100,15 @@ export const JobListItem = ({
   parentSearchTerm,
   isFavorite,
   revalidateFavorites,
-}: jobItemProps): JSX.Element => {
+}: JobItemProps): JSX.Element => {
   const hasJobs = jobInfo?.jobs || jobInfo?.builds;
   const isBuildable = (jobInfo?._class as string) == JobClassOptions.WorkflowJob;
+  const isBuilding = jobInfo?.building || jobInfo?.color?.toLowerCase().includes("anime");
 
   return (
     <List.Item
-      title={`${jobInfo?.displayName ?? job.name.toString()}${isBuildable ? buildableMark : ""}${
-        isFavorite ? favoriteMark : ""
+      title={`${jobInfo?.displayName ?? job.name.toString()}${isBuildable ? BuildableMark : ""}${
+        isFavorite ? FavoriteMark : ""
       }`}
       subtitle={jobInfo?.filterMatches?.join(", ")}
       accessories={formatAccessory(jobInfo?.color ?? (jobInfo?.building ? "building" : jobInfo?.result))}
@@ -163,6 +121,17 @@ export const JobListItem = ({
               title={"Build Job"}
               shortcut={{ modifiers: ["cmd"], key: "b" }}
               target={<JobForm job={job} jobInfo={jobInfo} />}
+            />
+          )}
+          {isBuilding && (
+            <Action
+              title={"Track Job"}
+              icon={Icon.Pencil}
+              onAction={async () => {
+                await JobTracker.addTrackedJob(job.name, job.url, jobInfo?.displayName ?? job.name);
+                popToRoot();
+              }}
+              shortcut={{ modifiers: ["cmd"], key: "t" }}
             />
           )}
           {hasJobs && (
