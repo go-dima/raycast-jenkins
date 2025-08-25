@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Color, Icon, List } from "@raycast/api";
+import { Action, ActionPanel, Color, Icon, List, popToRoot } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { ExtraInfo, JobClassOptions, JobResult } from "./job.types";
 import { fetchJsonData } from "./http/http";
@@ -8,6 +8,7 @@ import { useCachedState, useCachedPromise } from "@raycast/utils";
 import { JobForm } from "./JobForm";
 import { JenkinsJobService } from "./services/favorites";
 import { FetchResponse } from "./http/http.types";
+import { JobTracker } from "./JobTracker/job-tracker";
 
 const buildableMark = " 🔨";
 export const favoriteMark = " ⭐";
@@ -147,6 +148,7 @@ export const JobListItem = ({
 }: jobItemProps): JSX.Element => {
   const hasJobs = jobInfo?.jobs || jobInfo?.builds;
   const isBuildable = (jobInfo?._class as string) == JobClassOptions.WorkflowJob;
+  const isBuilding = jobInfo?.building || jobInfo?.color?.toLowerCase().includes("anime");
 
   return (
     <List.Item
@@ -164,6 +166,17 @@ export const JobListItem = ({
               title={"Build Job"}
               shortcut={{ modifiers: ["cmd"], key: "b" }}
               target={<JobForm job={job} jobInfo={jobInfo} />}
+            />
+          )}
+          {isBuilding && (
+            <Action
+              title={"Track Job"}
+              icon={Icon.Pencil}
+              onAction={async () => {
+                await JobTracker.addTrackedJob(job.name, job.url, jobInfo?.displayName ?? job.name);
+                popToRoot();
+              }}
+              shortcut={{ modifiers: ["cmd"], key: "t" }}
             />
           )}
           {hasJobs && (

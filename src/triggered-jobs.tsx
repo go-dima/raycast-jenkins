@@ -92,11 +92,7 @@ export default function Command() {
       }
     >
       {statusSummary.total === 0 ? (
-        <List.EmptyView
-          title="No Jobs Being Triggered"
-          description="Start a job from the extension to see it here"
-          icon={Icon.Hammer}
-        />
+        <List.EmptyView title="Start a job from the extension to see it here" icon={Icon.Hammer} />
       ) : (
         <>
           {statusOrder.map((status) => {

@@ -1,4 +1,4 @@
-import { MenuBarExtra, open, getPreferenceValues } from "@raycast/api";
+import { MenuBarExtra, open, getPreferenceValues, popToRoot } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { JobTracker } from "./JobTracker/job-tracker";
 import { formatDuration } from "./utils";
@@ -41,7 +41,7 @@ export default function Command() {
   return (
     <MenuBarExtra isLoading={isLoading} title={menuBarTitle} tooltip={tooltip}>
       {statusSummary.total === 0 ? (
-        <MenuBarExtra.Item title="No jobs being tracked" subtitle="Start a job from the extension to track it here" />
+        <MenuBarExtra.Item title="Start a job from the extension to track it here" />
       ) : (
         <>
           {renderJobSection("Building", groupedJobs.building, "building")}
@@ -70,7 +70,10 @@ export default function Command() {
         <MenuBarExtra.Item
           title="🌐 Open Jenkins"
           shortcut={{ modifiers: ["cmd"], key: "o" }}
-          onAction={() => open(jenkinsUrl)}
+          onAction={async () => {
+            await open(jenkinsUrl);
+            popToRoot();
+          }}
         />
       </MenuBarExtra.Section>
     </MenuBarExtra>
